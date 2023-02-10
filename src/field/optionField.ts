@@ -1,3 +1,4 @@
+import { BaseField } from "./baseField";
 import { Message } from "./message";
 
 interface StageVisibility {
@@ -6,7 +7,7 @@ interface StageVisibility {
   export: boolean;
 }
 
-export class OptionField {
+export class OptionField extends BaseField {
   private label: string;
   private description: string;
   private required: boolean;
@@ -17,6 +18,8 @@ export class OptionField {
   private messages: Array<Message>;
 
   constructor() {
+    super();
+
     this.label = "";
     this.description = "";
     this.required = false;
@@ -31,50 +34,24 @@ export class OptionField {
     this.messages = [];
   }
 
-  /**
-   * Sets the value in the UI table the user will see.
-   *
-   * @param {string} label - column header
-   * @returns this
-   */
   withLabel(label: string): this {
     this.label = label;
 
     return this;
   }
 
-  /**
-   * Sets the value in the UI table the user will see when they hover their mouse over the column header.
-   *
-   * @param {string} description - visible on hover of column header
-   * @returns this
-   */
   withDescription(description: string): this {
     this.description = description;
 
     return this;
   }
 
-  /**
-   * Ensures a field must have a value otherwise an error message will be present.
-   *
-   * @returns this
-   */
   withRequired(): this {
     this.required = true;
 
     return this;
   }
 
-  /**
-   * Change when a field is visible during the various import stages.
-   *
-   * @param {Object} opts - visibility options
-   * @param {boolean} [opts.mapping=true] - show during the mapping stage
-   * @param {boolean} [opts.review=true] - show during the review stage
-   * @param {boolean} [opts.export=true] - show during the export stage
-   * @returns this
-   */
   withVisibility(opts: Partial<StageVisibility>): this {
     if (opts.mapping === false && this.required) {
       throw Error("Cannot hide a required field from mapping.");
@@ -96,11 +73,6 @@ export class OptionField {
     return this;
   }
 
-  /**
-   * Ensures a user cannot edit the value.
-   *
-   * @returns this
-   */
   withReadOnly(): this {
     this.readOnly = true;
 

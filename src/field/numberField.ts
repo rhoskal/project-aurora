@@ -1,3 +1,4 @@
+import { BaseField } from "./baseField";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
@@ -8,7 +9,7 @@ interface StageVisibility {
   export: boolean;
 }
 
-export class NumberField {
+export class NumberField extends BaseField {
   private label: string;
   private description: string;
   private required: boolean;
@@ -20,6 +21,8 @@ export class NumberField {
   private messages: Array<Message>;
 
   constructor() {
+    super();
+
     this.label = "";
     this.description = "";
     this.required = false;
@@ -35,50 +38,24 @@ export class NumberField {
     this.messages = [];
   }
 
-  /**
-   * Sets the value in the UI table the user will see.
-   *
-   * @param {string} label - column header
-   * @returns this
-   */
   withLabel(label: string) {
     this.label = label;
 
     return this;
   }
 
-  /**
-   * Sets the value in the UI table the user will see when they hover their mouse over the column header.
-   *
-   * @param {string} description - visible on hover of column header
-   * @returns this
-   */
   withDescription(description: string) {
     this.description = description;
 
     return this;
   }
 
-  /**
-   * Ensures a field must have a value otherwise an error message will be present.
-   *
-   * @returns this
-   */
   withRequired() {
     this.required = true;
 
     return this;
   }
 
-  /**
-   * Change when a field is visible during the various import stages.
-   *
-   * @param {Object} opts - visibility options
-   * @param {boolean} [opts.mapping=true] - show during the mapping stage
-   * @param {boolean} [opts.review=true] - show during the review stage
-   * @param {boolean} [opts.export=true] - show during the export stage
-   * @returns this
-   */
   withVisibility(opts: Partial<StageVisibility>) {
     if (opts.mapping === false && this.required) {
       throw Error("Cannot hide a required field from mapping.");
@@ -100,34 +77,18 @@ export class NumberField {
     return this;
   }
 
-  /**
-   * Ensures a user cannot edit the value.
-   *
-   * @returns this
-   */
   withReadOnly() {
     this.readOnly = true;
 
     return this;
   }
 
-  /**
-   * Ensures a value is unique in the entire column.
-   *
-   * @returns this
-   */
   withUnique() {
     this.unique = true;
 
     return this;
   }
 
-  /**
-   * Sets a default value when none was provided by the user.
-   *
-   * @param {string} value
-   * @returns this
-   */
   withDefault(value: number) {
     if (this.value === null) {
       this.value = value;
@@ -136,28 +97,12 @@ export class NumberField {
     return this;
   }
 
-  /**
-   * Change the current value into something new.
-   *
-   * @callback handler
-   * @param {(null|string)} value
-   * @returns {string}
-   * @returns this
-   */
   withCompute(handler: (value: Nullable<number>) => number) {
     this.value = handler(this.value);
 
     return this;
   }
 
-  /**
-   * Validate the current value against certian conditions and display a message to the user when those conditions are not met.
-   *
-   * @callback handler
-   * @param {(null|string)} value
-   * @returns {(void|Message)}
-   * @returns this
-   */
   withValidate(handler: (value: Nullable<number>) => void | Message) {
     const msg = handler(this.value);
 
