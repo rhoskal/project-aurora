@@ -1,0 +1,5 @@
+bracketSameLine = true
+bracketSpacing = true
+printWidth = 80
+singleQuote = false
+trailingComma = "all"
