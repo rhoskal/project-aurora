@@ -1,4 +1,4 @@
-// import { ArrayField } from "./field/arrayField";
+import { ArrayField } from "./field/arrayField";
 import { DateField } from "./field/dateField";
 import { Message } from "./field/message";
 import { NumberField } from "./field/numberField";
@@ -56,11 +56,11 @@ const email = new TextField()
     // how to access to env vars?
   });
 
-// const emails = new ArrayField<string>()
-//   .withLabel("List of emails")
-//   .withCompute((values) => {
-//     return values.map((value) => value.trim().toLowerCase());
-//   });
+const emails = new ArrayField<string>()
+  .withLabel("List of emails")
+  .withCompute((values) => {
+    return values.map((value) => value.trim().toLowerCase());
+  });
 
 const state = new OptionField()
   .withLabel("State")
@@ -77,7 +77,7 @@ const contactsSheet = new Sheet("Contacts")
   .withField("first_name", firstName)
   .withField("last_name", lastName)
   .withField("email", email)
-  // .withField("emails", emails)
+  .withField("emails", emails)
   .withField("state", state)
   .withField("age", age)
   .withField("dob", dob)
