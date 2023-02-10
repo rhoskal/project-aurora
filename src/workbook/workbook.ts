@@ -1,13 +1,19 @@
+import { Sheet } from "../sheet/sheet";
+
 export class Workbook {
   private name: string;
+  private sheets: Array<Sheet>;
   private env: Record<string, any>;
 
   constructor(name: string) {
     this.name = name;
+    this.sheets = [];
     this.env = {};
   }
 
-  withSheet() {
+  withSheet(sheet: Sheet) {
+    this.sheets.concat(sheet);
+
     return this;
   }
 

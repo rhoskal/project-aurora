@@ -18,12 +18,24 @@ export class Sheet {
     this.fields = [];
   }
 
+  /**
+   * Adds a field to the Sheet.
+   *
+   * @params {string} key - internal key
+   * @params {Field} field - field type class instantiation
+   * @returns this
+   */
   withField(key: string, field: Field) {
     this.fields.concat([key, field]);
 
     return this;
   }
 
+  /**
+   * Run computations on all records in the Sheet.
+   *
+   * @returns this
+   */
   withCompute(
     handler: (opts: {
       records: Array<FlatfileRecord>;
@@ -36,7 +48,14 @@ export class Sheet {
     return this;
   }
 
-  withAction() {
+  /**
+   * Configure a custom action.
+   *
+   * @returns this
+   */
+  withAction(handler: (event: unknown) => void): this {
+    handler(null);
+
     return this;
   }
 }

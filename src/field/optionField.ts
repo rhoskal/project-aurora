@@ -34,9 +34,10 @@ export class OptionField {
   /**
    * Sets the value in the UI table the user will see.
    *
-   * @param label string
+   * @param {string} label - column header
+   * @returns this
    */
-  withLabel(label: string) {
+  withLabel(label: string): this {
     this.label = label;
 
     return this;
@@ -45,21 +46,36 @@ export class OptionField {
   /**
    * Sets the value in the UI table the user will see when they hover their mouse over the column header.
    *
-   * @param description string
+   * @param {string} description - visible on hover of column header
+   * @returns this
    */
-  withDescription(description: string) {
+  withDescription(description: string): this {
     this.description = description;
 
     return this;
   }
 
-  withRequired() {
+  /**
+   * Ensures a field must have a value otherwise an error message will be present.
+   *
+   * @returns this
+   */
+  withRequired(): this {
     this.required = true;
 
     return this;
   }
 
-  withVisibility(opts: Partial<StageVisibility>) {
+  /**
+   * Change when a field is visible during the various import stages.
+   *
+   * @param {Object} opts - visibility options
+   * @param {boolean} [opts.mapping=true] - show during the mapping stage
+   * @param {boolean} [opts.review=true] - show during the review stage
+   * @param {boolean} [opts.export=true] - show during the export stage
+   * @returns this
+   */
+  withVisibility(opts: Partial<StageVisibility>): this {
     if (opts.mapping === false && this.required) {
       throw Error("Cannot hide a required field from mapping.");
     }
@@ -80,19 +96,37 @@ export class OptionField {
     return this;
   }
 
-  withReadOnly() {
+  /**
+   * Ensures a user cannot edit the value.
+   *
+   * @returns this
+   */
+  withReadOnly(): this {
     this.readOnly = true;
 
     return this;
   }
 
-  withChoices(choices: Record<string, any>) {
+  /**
+   * Sets the choice synchronously.
+   *
+   * @param {Object} choices
+   * @returns this
+   */
+  withChoices(choices: Record<string, any>): this {
     this.value = choices;
 
     return this;
   }
 
-  withChoicesAsync(handler: () => Promise<Record<string, any>>) {
+  /**
+   * Sets the choice asynchronously.
+   *
+   * @callback handler
+   * @returns {Promise}
+   * @returns this
+   */
+  withChoicesAsync(handler: () => Promise<Record<string, any>>): this {
     handler()
       .then((choices) => {
         // decode choices to ensure it's the right shape

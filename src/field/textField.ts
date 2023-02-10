@@ -1,5 +1,7 @@
 import { Message } from "./message";
 
+type Nullable<T> = null | T;
+
 interface StageVisibility {
   mapping: boolean;
   review: boolean;
@@ -14,7 +16,7 @@ export class TextField {
   private readOnly: boolean;
   private unique: boolean;
 
-  private value: null | string;
+  private value: Nullable<string>;
   private messages: Array<Message>;
 
   constructor() {
@@ -36,9 +38,10 @@ export class TextField {
   /**
    * Sets the value in the UI table the user will see.
    *
-   * @param {string} label
+   * @param {string} label - column header
+   * @returns this
    */
-  withLabel(label: string) {
+  withLabel(label: string): this {
     this.label = label;
 
     return this;
@@ -47,7 +50,8 @@ export class TextField {
   /**
    * Sets the value in the UI table the user will see when they hover their mouse over the column header.
    *
-   * @param {string} description
+   * @param {string} description - visible on hover of column header
+   * @returns this
    */
   withDescription(description: string) {
     this.description = description;
@@ -57,6 +61,8 @@ export class TextField {
 
   /**
    * Ensures a field must have a value otherwise an error message will be present.
+   *
+   * @returns this
    */
   withRequired() {
     this.required = true;
@@ -67,7 +73,11 @@ export class TextField {
   /**
    * Change when a field is visible during the various import stages.
    *
-   * @param {Object} opts
+   * @param {Object} opts - visibility options
+   * @param {boolean} [opts.mapping=true] - show during the mapping stage
+   * @param {boolean} [opts.review=true] - show during the review stage
+   * @param {boolean} [opts.export=true] - show during the export stage
+   * @returns this
    */
   withVisibility(opts: Partial<StageVisibility>) {
     if (opts.mapping === false && this.required) {
@@ -92,6 +102,8 @@ export class TextField {
 
   /**
    * Ensures a user cannot edit the value.
+   *
+   * @returns this
    */
   withReadOnly() {
     this.readOnly = true;
@@ -101,6 +113,8 @@ export class TextField {
 
   /**
    * Ensures a value is unique in the entire column.
+   *
+   * @returns this
    */
   withUnique() {
     this.unique = true;
@@ -108,6 +122,12 @@ export class TextField {
     return this;
   }
 
+  /**
+   * Sets a default value when none was provided by the user.
+   *
+   * @param {string} value
+   * @returns this
+   */
   withDefault(value: string) {
     if (this.value === null) {
       this.value = value;
@@ -116,13 +136,29 @@ export class TextField {
     return this;
   }
 
-  withCompute(handler: (value: null | string) => string) {
+  /**
+   * Change the current value into something new.
+   *
+   * @callback handler
+   * @param {(null|string)} value
+   * @returns {string}
+   * @returns this
+   */
+  withCompute(handler: (value: Nullable<string>) => string) {
     this.value = handler(this.value);
 
     return this;
   }
 
-  withValidate(handler: (value: null | string) => void | Message) {
+  /**
+   * Validate the current value against certian conditions and display a message to the user when those conditions are not met.
+   *
+   * @callback handler
+   * @param {(null|string)} value
+   * @returns {(void|Message)}
+   * @returns this
+   */
+  withValidate(handler: (value: Nullable<string>) => void | Message) {
     const msg = handler(this.value);
 
     if (msg) {
@@ -132,15 +168,3 @@ export class TextField {
     return this;
   }
 }
-
-// import { BaseField } from "./baseField";
-
-// export class TextField extends BaseField {
-//   constructor(args) {
-//     super(args);
-//   }
-
-//   test() {
-//     this.
-//   }
-// }

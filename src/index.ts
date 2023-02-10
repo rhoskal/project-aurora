@@ -5,6 +5,7 @@ import { DateField } from "./field/dateField";
 import { Message } from "./field/message";
 import { Sheet } from "./sheet/sheet";
 import { Workbook } from "./workbook/workbook";
+import * as G from "./helpers/typeGuards";
 
 const firstName = new TextField()
   .withLabel("Contact's legal first Name")
@@ -18,7 +19,7 @@ const age = new NumberField()
   .withLabel("Age")
   .withDescription("Contact's current age")
   .withValidate((value) => {
-    if (value < 18) {
+    if (G.isNotNil(value) && value < 18) {
       return new Message("error", "cannot include minors");
     }
   });
@@ -29,9 +30,15 @@ const email = new TextField()
   .withRequired()
   .withUnique()
   .withVisibility({ mapping: false })
-  .withCompute((value) => value.trim().toLowerCase())
+  .withCompute((value) => {
+    if (G.isNotNil(value)) {
+      return value.trim().toLowerCase();
+    } else {
+      return "";
+    }
+  })
   .withValidate((value) => {
-    if (!value.includes("@")) {
+    if (G.isNotNil(value) && G.isFalsy(value.includes("@"))) {
       return new Message("error", "what the foo bar!?");
     }
 
@@ -58,18 +65,18 @@ const contactsSheet = new Sheet("Contacts")
   .withField("age", age)
   .withField("dob", dob)
   .withCompute(({ records, session, logger }) => {
-    records.map((record) => {
-      const firstName = record.get("first_name");
-      const lastName = record.get("last_name");
-
-      if (firstName === null && lastName === null) {
-        record.addWarning(["first_name", "last_name"], "One must be present.");
-      }
-
-      // also add async here or `.withComputeAsync(({ records, _session, _logger }) => { })` ??
-
-      return record;
-    });
+    // records.map((record) => {
+    //   const firstName = record.get("first_name");
+    //   const lastName = record.get("last_name");
+    //
+    //   if (firstName === null && lastName === null) {
+    //     record.addWarning(["first_name", "last_name"], "One must be present.");
+    //   }
+    //
+    //   // also add async here or `.withComputeAsync(({ records, _session, _logger }) => { })` ??
+    //
+    //   return record;
+    // });
   })
   .withAction((event) => {});
 

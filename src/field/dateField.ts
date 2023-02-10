@@ -1,5 +1,7 @@
 import { Message } from "./message";
 
+type Nullable<T> = null | T;
+
 interface StageVisibility {
   mapping: boolean;
   review: boolean;
@@ -14,7 +16,7 @@ export class DateField {
   private readOnly: boolean;
   private unique: boolean;
 
-  private value: null | Date;
+  private value: Nullable<Date>;
   private messages: Array<Message>;
 
   constructor() {
@@ -36,9 +38,10 @@ export class DateField {
   /**
    * Sets the value in the UI table the user will see.
    *
-   * @param {string} label
+   * @param {string} label - column header
+   * @returns this
    */
-  withLabel(label: string) {
+  withLabel(label: string): this {
     this.label = label;
 
     return this;
@@ -47,9 +50,10 @@ export class DateField {
   /**
    * Sets the value in the UI table the user will see when they hover their mouse over the column header.
    *
-   * @param {string} description
+   * @param {string} description - visible on hover of column header
+   * @returns this
    */
-  withDescription(description: string) {
+  withDescription(description: string): this {
     this.description = description;
 
     return this;
@@ -57,8 +61,10 @@ export class DateField {
 
   /**
    * Ensures a field must have a value otherwise an error message will be present.
+   *
+   * @returns this
    */
-  withRequired() {
+  withRequired(): this {
     this.required = true;
 
     return this;
@@ -67,9 +73,13 @@ export class DateField {
   /**
    * Change when a field is visible during the various import stages.
    *
-   * @param {Object} opts
+   * @param {Object} opts - visibility options
+   * @param {boolean} [opts.mapping=true] - show during the mapping stage
+   * @param {boolean} [opts.review=true] - show during the review stage
+   * @param {boolean} [opts.export=true] - show during the export stage
+   * @returns this
    */
-  withVisibility(opts: Partial<StageVisibility>) {
+  withVisibility(opts: Partial<StageVisibility>): this {
     if (opts.mapping === false && this.required) {
       throw Error("Cannot hide a required field from mapping.");
     }
@@ -92,8 +102,10 @@ export class DateField {
 
   /**
    * Ensures a user cannot edit the value.
+   *
+   * @returns this
    */
-  withReadOnly() {
+  withReadOnly(): this {
     this.readOnly = true;
 
     return this;
@@ -101,14 +113,22 @@ export class DateField {
 
   /**
    * Ensures a value is unique in the entire column.
+   *
+   * @returns this
    */
-  withUnique() {
+  withUnique(): this {
     this.unique = true;
 
     return this;
   }
 
-  withDefault(value: Date) {
+  /**
+   * Sets a default value when none was provided by the user.
+   *
+   * @param {Date} value
+   * @returns this
+   */
+  withDefault(value: Date): this {
     if (this.value === null) {
       this.value = value;
     }
@@ -116,13 +136,29 @@ export class DateField {
     return this;
   }
 
-  withCompute(handler: (value: null | Date) => Date) {
+  /**
+   * Change the current value into something new.
+   *
+   * @callback handler
+   * @param {(null|Date)} value
+   * @returns {Date}
+   * @returns this
+   */
+  withCompute(handler: (value: Nullable<Date>) => Date): this {
     this.value = handler(this.value);
 
     return this;
   }
 
-  withValidate(handler: (value: null | Date) => void | Message) {
+  /**
+   * Validate the current value against certian conditions and display a message to the user when those conditions are not met.
+   *
+   * @callback handler
+   * @param {(null|Date)} value
+   * @returns {(void|Message)}
+   * @returns this
+   */
+  withValidate(handler: (value: Nullable<Date>) => void | Message): this {
     const msg = handler(this.value);
 
     if (msg) {
