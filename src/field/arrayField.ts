@@ -1,14 +1,12 @@
 import { Message } from "./message";
 
-type Nullable<T> = null | T;
-
 interface StageVisibility {
   mapping: boolean;
   review: boolean;
   export: boolean;
 }
 
-export class DateField {
+export class ArrayField<T> {
   private label: string;
   private description: string;
   private required: boolean;
@@ -16,7 +14,7 @@ export class DateField {
   private readOnly: boolean;
   private unique: boolean;
 
-  private value: Nullable<Date>;
+  private value: Array<T>;
   private messages: Array<Message>;
 
   constructor() {
@@ -31,7 +29,7 @@ export class DateField {
     this.readOnly = false;
     this.unique = false;
 
-    this.value = null;
+    this.value = [];
     this.messages = [];
   }
 
@@ -53,7 +51,7 @@ export class DateField {
    * @param {string} description - visible on hover of column header
    * @returns this
    */
-  withDescription(description: string): this {
+  withDescription(description: string) {
     this.description = description;
 
     return this;
@@ -64,7 +62,7 @@ export class DateField {
    *
    * @returns this
    */
-  withRequired(): this {
+  withRequired() {
     this.required = true;
 
     return this;
@@ -79,7 +77,7 @@ export class DateField {
    * @param {boolean} [opts.export=true] - show during the export stage
    * @returns this
    */
-  withVisibility(opts: Partial<StageVisibility>): this {
+  withVisibility(opts: Partial<StageVisibility>) {
     if (opts.mapping === false && this.required) {
       throw Error("Cannot hide a required field from mapping.");
     }
@@ -105,19 +103,8 @@ export class DateField {
    *
    * @returns this
    */
-  withReadOnly(): this {
+  withReadOnly() {
     this.readOnly = true;
-
-    return this;
-  }
-
-  /**
-   * Ensures a value is unique in the entire column.
-   *
-   * @returns this
-   */
-  withUnique(): this {
-    this.unique = true;
 
     return this;
   }
@@ -125,38 +112,12 @@ export class DateField {
   /**
    * Sets a default value when none was provided by the user.
    *
-   * @param {Date} value
+   * @param {Array} values
    * @returns this
    */
-  withDefault(value: Date): this {
-    if (this.value === null) {
-      this.value = value;
-    }
+  withDefault(values: Array<T>) {
+    this.value = this.value.concat(values);
 
-    return this;
-  }
-
-  withOffset(value: number): this {
-    return this;
-  }
-
-  /**
-   * Format the date in the UI table but not change the underlying Date type.
-   *
-   * @params {string} value - internal standard format string
-   * @returns this
-   */
-  withDisplayFormat(value: string): this {
-    return this;
-  }
-
-  /**
-   * Format the date on data egress but not change the underlying Date type.
-   *
-   * @params {string} value - internal standard format string
-   * @returns this
-   */
-  withEgressFormat(value: string): this {
     return this;
   }
 
@@ -164,11 +125,11 @@ export class DateField {
    * Change the current value into something new.
    *
    * @callback handler
-   * @param {(null|Date)} value
-   * @returns {Date}
+   * @param {(null|string)} value
+   * @returns {string}
    * @returns this
    */
-  withCompute(handler: (value: Nullable<Date>) => Date): this {
+  withCompute(handler: (value: Array<T>) => Array<T>) {
     this.value = handler(this.value);
 
     return this;
@@ -178,11 +139,11 @@ export class DateField {
    * Validate the current value against certian conditions and display a message to the user when those conditions are not met.
    *
    * @callback handler
-   * @param {(null|Date)} value
+   * @param {(null|string)} value
    * @returns {(void|Message)}
    * @returns this
    */
-  withValidate(handler: (value: Nullable<Date>) => void | Message): this {
+  withValidate(handler: (value: Array<T>) => void | Message) {
     const msg = handler(this.value);
 
     if (msg) {

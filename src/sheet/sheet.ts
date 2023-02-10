@@ -1,9 +1,11 @@
+// import { ArrayField } from "../field/arrayField";
 import { DateField } from "../field/dateField";
 import { NumberField } from "../field/numberField";
 import { OptionField } from "../field/optionField";
 import { TextField } from "../field/textField";
 
 type Field = TextField | NumberField | OptionField | DateField;
+// | ArrayField<T>;
 
 interface FlatfileRecord {}
 
@@ -25,7 +27,7 @@ export class Sheet {
    * @params {Field} field - field type class instantiation
    * @returns this
    */
-  withField(key: string, field: Field) {
+  withField(key: string, field: Field): this {
     this.fields.concat([key, field]);
 
     return this;
@@ -42,7 +44,7 @@ export class Sheet {
       session: {};
       logger: {};
     }) => void,
-  ) {
+  ): this {
     handler({ records: this.records, session: {}, logger: {} });
 
     return this;
