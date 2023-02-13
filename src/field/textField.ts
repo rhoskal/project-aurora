@@ -1,114 +1,220 @@
-import { BaseField } from "./baseField";
+import { Builder } from "./builder";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
 
-interface StageVisibility {
-  mapping: boolean;
-  review: boolean;
-  export: boolean;
-}
-
-export class TextField extends BaseField {
-  private label: string; // use the #label syntax for private?
+class TextField {
+  private label: string;
   private description: string;
-  private required: boolean;
-  private visibility: StageVisibility;
-  private readOnly: boolean;
-  private unique: boolean;
+  private isRequired: boolean;
+  private isVirtual: boolean;
+  private isReadOnly: boolean;
+  private isUnique: boolean;
 
   private value: Nullable<string>;
   private messages: Array<Message>;
 
   constructor() {
-    super();
-
     this.label = "";
     this.description = "";
-    this.required = false;
-    this.visibility = {
-      mapping: true,
-      review: true,
-      export: true,
-    };
-    this.readOnly = false;
-    this.unique = false;
+    this.isRequired = false;
+    this.isVirtual = false;
+    this.isReadOnly = false;
+    this.isUnique = false;
 
     this.value = null; // should this be null | string? how to represent no value? We could return a custom type like a Maybe
     this.messages = [];
   }
 
-  withLabel(label: string): this {
+  public setLabel(label: string): void {
     this.label = label;
-
-    return this;
   }
 
-  withDescription(description: string) {
+  public getLabel(): string {
+    return this.label;
+  }
+
+  public setDescription(description: string): void {
     this.description = description;
-
-    return this;
   }
 
-  withRequired() {
-    this.required = true;
-
-    return this;
+  public getDescription(): string {
+    return this.description;
   }
 
-  withVisibility(opts: Partial<StageVisibility>) {
-    if (opts.mapping === false && this.required) {
+  public setIsRequired(): void {
+    this.isRequired = true;
+  }
+
+  public getIsRequired(): boolean {
+    return this.isRequired;
+  }
+
+  public setIsVirtual() {
+    if (this.isRequired) {
       throw Error("Cannot hide a required field from mapping.");
     }
 
-    if (
-      opts.mapping === false &&
-      opts.review === false &&
-      opts.export === false
-    ) {
-      throw Error("Cannot hide a field from every stage.");
-    }
-
-    this.visibility = {
-      ...this.visibility,
-      ...opts,
-    };
-
-    return this;
+    this.isVirtual = true;
+    this.isReadOnly = true;
   }
 
-  withReadOnly() {
-    this.readOnly = true;
-
-    return this;
+  public getIsVirtual(): boolean {
+    return this.isVirtual;
   }
 
-  withUnique() {
-    this.unique = true;
-
-    return this;
+  public setIsReadOnly(): void {
+    this.isReadOnly = true;
   }
 
-  withDefault(value: string) {
+  public getIsReadOnly(): boolean {
+    return this.isReadOnly;
+  }
+
+  public setIsUnique(): void {
+    this.isUnique = true;
+  }
+
+  public getIsUnique(): boolean {
+    return this.isUnique;
+  }
+
+  public setDefaultValue(value: string): void {
     if (this.value === null) {
       this.value = value;
     }
-
-    return this;
   }
 
-  withCompute(handler: (value: Nullable<string>) => string) {
+  public setComputeFn(handler: (value: Nullable<string>) => string): void {
     this.value = handler(this.value);
-
-    return this;
   }
 
-  withValidate(handler: (value: Nullable<string>) => void | Message) {
+  public setValidateFn(
+    handler: (value: Nullable<string>) => void | Message,
+  ): void {
     const msg = handler(this.value);
 
     if (msg) {
       this.messages.concat(msg);
     }
+  }
+
+  public getValue(): Nullable<string> {
+    return this.value;
+  }
+
+  public getMessages(): Array<Message> {
+    return this.messages;
+  }
+}
+
+export class TextFieldBuilder implements Builder {
+  private textField: TextField;
+
+  constructor() {
+    this.textField = new TextField();
+  }
+
+  /**
+   * Sets the value in the UI table the user will see.
+   *
+   * @param {string} label - column header
+   * @returns this
+   */
+  withLabel(label: string): this {
+    this.textField.setLabel(label);
+
+    return this;
+  }
+
+  /**
+   * Sets the value in the UI table the user will see when they hover their mouse over the column header.
+   *
+   * @param {string} description - visible on hover of column header
+   * @returns this
+   */
+  withDescription(description: string): this {
+    this.textField.setDescription(description);
+
+    return this;
+  }
+
+  /**
+   * Ensures a field must have a value otherwise an error message will be present.
+   *
+   * @returns this
+   */
+  withRequired(): this {
+    this.textField.setIsRequired();
+
+    return this;
+  }
+
+  /**
+   * Specifies the field is only visible during the review stage and makes it inherently a read-only field.
+   *
+   * @returns this
+   */
+  withVirtual(): this {
+    this.textField.setIsVirtual();
+
+    return this;
+  }
+
+  /**
+   * Ensures a user cannot edit the value.
+   *
+   * @returns this
+   */
+  withReadOnly(): this {
+    this.textField.setIsReadOnly();
+
+    return this;
+  }
+
+  /**
+   * Ensures a value is unique in the entire column.
+   *
+   * @returns this
+   */
+  withUnique(): this {
+    this.textField.setIsUnique();
+
+    return this;
+  }
+
+  /**
+   * Sets a default value when none was provided by the user.
+   *
+   * @param value
+   * @returns this
+   */
+  withDefault(value: string): this {
+    this.textField.setDefaultValue(value);
+
+    return this;
+  }
+
+  /**
+   * Change the current value into something new.
+   *
+   * @callback handler
+   * @returns this
+   */
+  withCompute(handler: (value: Nullable<string>) => string): this {
+    this.textField.setComputeFn(handler);
+
+    return this;
+  }
+
+  /**
+   * Validate the current value against certian conditions and display a message to the user when those conditions are not met.
+   *
+   * @callback handler
+   * @returns this
+   */
+  withValidate(handler: (value: Nullable<string>) => void | Message): this {
+    this.textField.setValidateFn(handler);
 
     return this;
   }

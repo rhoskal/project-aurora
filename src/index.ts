@@ -1,11 +1,11 @@
-import { ArrayField } from "./field/arrayField";
-import { DateField } from "./field/dateField";
+import { ArrayFieldBuilder as ArrayField } from "./field/arrayField";
+import { DateFieldBuilder as DateField } from "./field/dateField";
 import { Message } from "./field/message";
-import { NumberField } from "./field/numberField";
-import { OptionField } from "./field/optionField";
-import { Sheet } from "./sheet/sheet";
-import { TextField } from "./field/textField";
-import { Workbook } from "./workbook/workbook";
+import { NumberFieldBuilder as NumberField } from "./field/numberField";
+import { OptionFieldBuilder as OptionField } from "./field/optionField";
+import { SheetBuilder as Sheet } from "./sheet/sheet";
+import { TextFieldBuilder as TextField } from "./field/textField";
+import { WorkbookBuilder as Workbook } from "./workbook/workbook";
 import * as G from "./helpers/typeGuards";
 
 const firstName = new TextField()
@@ -27,7 +27,7 @@ const age = new NumberField()
 
 const dob = new DateField()
   .withLabel("Date of Birth")
-  .withOffset(-7)
+  // .withOffset(-7)
   // .withLocale("fr")
   .withDisplayFormat("dd/MM/yyyy")
   .withValidate((value) => {
@@ -39,7 +39,7 @@ const dob = new DateField()
 const email = new TextField()
   .withRequired()
   .withUnique()
-  .withVisibility({ mapping: false })
+  .withVirtual()
   .withCompute((value) => {
     if (G.isNotNil(value)) {
       return value.trim().toLowerCase();

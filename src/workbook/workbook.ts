@@ -1,9 +1,9 @@
-import { Sheet } from "../sheet/sheet";
+import { SheetBuilder as Sheet } from "../sheet/sheet";
 
-export class Workbook {
-  private name: string;
+class Workbook {
+  private readonly name: string;
   private sheets: Array<Sheet>;
-  private env: Record<string, any>;
+  private env: Record<string, unknown>;
 
   constructor(name: string) {
     this.name = name;
@@ -11,14 +11,38 @@ export class Workbook {
     this.env = {};
   }
 
-  withSheet(sheet: Sheet) {
+  public getName(): string {
+    return this.name;
+  }
+
+  public getEnv(): Record<string, unknown> {
+    return this.env;
+  }
+
+  public addSheet(sheet: Sheet): void {
     this.sheets.concat(sheet);
+  }
+
+  public setEnv(env: Record<string, unknown>): void {
+    this.env = env;
+  }
+}
+
+export class WorkbookBuilder {
+  private workbook: Workbook;
+
+  constructor(name: string) {
+    this.workbook = new Workbook(name);
+  }
+
+  withSheet(sheet: Sheet): this {
+    this.workbook.addSheet(sheet);
 
     return this;
   }
 
-  withEnv(env: Record<string, any>) {
-    this.env = env;
+  withEnv(env: Record<string, unknown>): this {
+    this.workbook.setEnv(env);
 
     return this;
   }

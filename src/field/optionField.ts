@@ -1,80 +1,179 @@
-import { BaseField } from "./baseField";
+import { Builder } from "./builder";
 import { Message } from "./message";
 
-interface StageVisibility {
-  mapping: boolean;
-  review: boolean;
-  export: boolean;
-}
-
-export class OptionField extends BaseField {
+class OptionField {
   private label: string;
   private description: string;
-  private required: boolean;
-  private visibility: StageVisibility;
-  private readOnly: boolean;
+  private isRequired: boolean;
+  private isVirtual: boolean;
+  private isReadOnly: boolean;
+  private isUnique: boolean;
 
-  private value: Record<string, any>;
+  private value: Record<string, unknown>;
   private messages: Array<Message>;
 
   constructor() {
-    super();
-
     this.label = "";
     this.description = "";
-    this.required = false;
-    this.visibility = {
-      mapping: true,
-      review: true,
-      export: true,
-    };
-    this.readOnly = false;
+    this.isRequired = false;
+    this.isVirtual = false;
+    this.isReadOnly = false;
+    this.isUnique = false;
 
     this.value = {};
     this.messages = [];
   }
 
-  withLabel(label: string): this {
+  public setLabel(label: string): void {
     this.label = label;
-
-    return this;
   }
 
-  withDescription(description: string): this {
+  public getLabel(): string {
+    return this.label;
+  }
+
+  public setDescription(description: string): void {
     this.description = description;
-
-    return this;
   }
 
-  withRequired(): this {
-    this.required = true;
-
-    return this;
+  public getDescription(): string {
+    return this.description;
   }
 
-  withVisibility(opts: Partial<StageVisibility>): this {
-    if (opts.mapping === false && this.required) {
+  public setIsRequired(): void {
+    this.isRequired = true;
+  }
+
+  public getIsRequired(): boolean {
+    return this.isRequired;
+  }
+
+  public setIsVirtual() {
+    if (this.isRequired) {
       throw Error("Cannot hide a required field from mapping.");
     }
 
-    if (
-      opts.mapping === false &&
-      opts.review === false &&
-      opts.export === false
-    ) {
-      throw Error("Cannot hide a field from every stage.");
-    }
+    this.isVirtual = true;
+    this.isReadOnly = true;
+  }
 
-    this.visibility = {
-      ...this.visibility,
-      ...opts,
-    };
+  public getIsVirtual(): boolean {
+    return this.isVirtual;
+  }
+
+  public setIsReadOnly(): void {
+    this.isReadOnly = true;
+  }
+
+  public getIsReadOnly(): boolean {
+    return this.isReadOnly;
+  }
+
+  public setIsUnique(): void {
+    this.isUnique = true;
+  }
+
+  public getIsUnique(): boolean {
+    return this.isUnique;
+  }
+
+  public setChoices(choices: Record<string, unknown>): void {
+    this.value = choices;
+  }
+
+  public setChoicesAsync(
+    handler: () => Promise<Record<string, unknown>>,
+  ): void {
+    handler()
+      .then((choices) => {
+        // decode choices to ensure it's the right shape
+        this.value = choices;
+      })
+      .catch((err: unknown) => {
+        // log internally
+      });
+  }
+
+  public getValue(): Record<string, unknown> {
+    return this.value;
+  }
+
+  public getMessages(): Array<Message> {
+    return this.messages;
+  }
+}
+
+export class OptionFieldBuilder implements Builder {
+  private optionField: OptionField;
+
+  constructor() {
+    this.optionField = new OptionField();
+  }
+
+  /**
+   * Sets the value in the UI table the user will see.
+   *
+   * @param {string} label - column header
+   * @returns this
+   */
+  withLabel(label: string): this {
+    this.optionField.setLabel(label);
 
     return this;
   }
 
+  /**
+   * Sets the value in the UI table the user will see when they hover their mouse over the column header.
+   *
+   * @param {string} description - visible on hover of column header
+   * @returns this
+   */
+  withDescription(description: string): this {
+    this.optionField.setDescription(description);
+
+    return this;
+  }
+
+  /**
+   * Ensures a field must have a value otherwise an error message will be present.
+   *
+   * @returns this
+   */
+  withRequired(): this {
+    this.optionField.setIsRequired();
+
+    return this;
+  }
+
+  /**
+   * Specifies the field is only visible during the review stage and makes it inherently a read-only field.
+   *
+   * @returns this
+   */
+  withVirtual(): this {
+    this.optionField.setIsVirtual();
+
+    return this;
+  }
+
+  /**
+   * Ensures a user cannot edit the value.
+   *
+   * @returns this
+   */
   withReadOnly(): this {
-    this.readOnly = true;
+    this.optionField.setIsReadOnly();
+
+    return this;
+  }
+
+  /**
+   * Ensures a value is unique in the entire column.
+   *
+   * @returns this
+   */
+  withUnique(): this {
+    this.optionField.setIsUnique();
 
     return this;
   }
@@ -85,8 +184,8 @@ export class OptionField extends BaseField {
    * @param {Object} choices
    * @returns this
    */
-  withChoices(choices: Record<string, any>): this {
-    this.value = choices;
+  withChoices(choices: Record<string, unknown>): this {
+    this.optionField.setChoices(choices);
 
     return this;
   }
@@ -98,15 +197,8 @@ export class OptionField extends BaseField {
    * @returns {Promise}
    * @returns this
    */
-  withChoicesAsync(handler: () => Promise<Record<string, any>>): this {
-    handler()
-      .then((choices) => {
-        // decode choices to ensure it's the right shape
-        this.value = choices;
-      })
-      .catch((err: unknown) => {
-        // log internally
-      });
+  withChoicesAsync(handler: () => Promise<Record<string, unknown>>): this {
+    this.optionField.setChoicesAsync(handler);
 
     return this;
   }
