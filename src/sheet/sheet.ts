@@ -3,6 +3,8 @@ import { DateFieldBuilder as DateField } from "../field/dateField";
 import { NumberFieldBuilder as NumberField } from "../field/numberField";
 import { OptionFieldBuilder as OptionField } from "../field/optionField";
 import { TextFieldBuilder as TextField } from "../field/textField";
+import { FlatfileRecord } from "./flatfileRecord";
+import { Logger } from "./logger";
 
 type Field<T> =
   | TextField
@@ -11,17 +13,19 @@ type Field<T> =
   | DateField
   | ArrayField<T>;
 
-interface FlatfileRecord {}
+interface Meta {}
 
 class Sheet {
   private readonly name: string;
   private records: Array<FlatfileRecord>;
-  private fields: Array<[key: string, field: Field<unknown>]>;
+  private fields: Map<string, Field<unknown>>;
+  private readonly logger: Logger;
 
   constructor(name: string) {
     this.name = name;
     this.records = [];
-    this.fields = [];
+    this.fields = new Map();
+    this.logger = new Logger();
   }
 
   public getName(): string {
@@ -29,17 +33,17 @@ class Sheet {
   }
 
   public addField(key: string, field: Field<unknown>): void {
-    this.fields.concat([key, field]);
+    this.fields.set(key, field);
   }
 
   public setComputeFn(
     handler: (opts: {
       records: Array<FlatfileRecord>;
-      session: {};
-      logger: {};
+      meta: Meta;
+      logger: Logger;
     }) => void,
   ): void {
-    handler({ records: this.records, session: {}, logger: {} });
+    handler({ records: this.records, meta: {}, logger: this.logger });
   }
 
   public addAction(handler: (event: unknown) => void): void {
@@ -75,8 +79,8 @@ export class SheetBuilder {
   withCompute(
     handler: (opts: {
       records: Array<FlatfileRecord>;
-      session: {};
-      logger: {};
+      meta: Meta;
+      logger: Logger;
     }) => void,
   ): this {
     this.sheet.setComputeFn(handler);

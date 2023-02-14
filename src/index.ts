@@ -81,19 +81,20 @@ const contactsSheet = new Sheet("Contacts")
   .withField("state", state)
   .withField("age", age)
   .withField("dob", dob)
-  .withCompute(({ records, session, logger }) => {
-    // records.map((record) => {
-    //   const firstName = record.get("first_name");
-    //   const lastName = record.get("last_name");
-    //
-    //   if (firstName === null && lastName === null) {
-    //     record.addWarning(["first_name", "last_name"], "One must be present.");
-    //   }
-    //
-    //   // also add async here or `.withComputeAsync(({ records, _session, _logger }) => { })` ??
-    //
-    //   return record;
-    // });
+  .withCompute(({ records, meta, logger }) => {
+    records.map((record) => {
+      const firstName = record.get("first_name");
+      const lastName = record.get("last_name");
+
+      if (firstName === null && lastName === null) {
+        record.addWarning(["first_name", "last_name"], "One must be present.");
+      }
+
+      // also add async here or `.withComputeAsync(({ records, _session, _logger }) => { })` ??
+      logger.info("howdy");
+
+      return record;
+    });
   })
   .withAction((event) => {});
 
