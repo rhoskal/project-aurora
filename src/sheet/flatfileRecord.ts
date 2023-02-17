@@ -1,22 +1,54 @@
+import { Message } from "../field/message";
 import * as G from "../helpers/typeGuards";
 
-export interface FlatfileRecord {
-  get(key: string): unknown;
-  set(key: string, value: string | number | object): this;
-  modify(key: string, handler: (value: unknown) => typeof value): this;
-  addInfo(key: string, message: string): this;
-  addInfo(keys: Array<string>, message: string): this;
-  addWarning(key: string, message: string): this;
-  addWarning(keys: Array<string>, message: string): this;
-  addError(key: string, message: string): this;
-  addError(keys: Array<string>, message: string): this;
+type Key<O> = keyof O;
+type Value<O> = O[keyof O];
+
+export class FFRecord<O extends object = {}> {
+  private value: O;
+  private messages: Array<Message>;
+
+  constructor(record: O) {
+    this.value = record;
+    this.messages = [];
+  }
+
+  get(key: Key<O>): Value<O> {
+    return this.value[key];
+  }
+
+  set(key: Key<O>, value: Value<O>): void {
+    this.value[key] = value;
+  }
+
+  public addMessage(key: Key<O>, message: Message): void {
+    this.messages.concat(message);
+  }
+
+  public getMessages(): Array<Message> {
+    return this.messages;
+  }
 }
 
-export class DataRecord implements FlatfileRecord {
-  private value: Record<string, unknown>;
+export interface FlatfileRecord<O extends object = {}> {
+  get(key: Key<O>): Value<O>;
+  set(key: Key<O>, value: Value<O>): this;
+  modify(key: Key<O>, handler: (value: Value<O>) => typeof value): this;
+  addInfo(key: Key<O>, message: string): this;
+  addInfo(keys: Array<Key<O>>, message: string): this;
+  addWarning(key: Key<O>, message: string): this;
+  addWarning(keys: Array<Key<O>>, message: string): this;
+  addError(key: Key<O>, message: string): this;
+  addError(keys: Array<Key<O>>, message: string): this;
+}
 
-  constructor(record: Record<string, unknown>) {
-    this.value = record;
+export class FlatfileRecordBuilder<O extends object>
+  implements FlatfileRecord<O>
+{
+  private flatfileRecord: FFRecord<O>;
+
+  constructor(record: O) {
+    this.flatfileRecord = new FFRecord<O>(record);
   }
 
   /**
@@ -25,8 +57,8 @@ export class DataRecord implements FlatfileRecord {
    * @param {string} key
    * @returns unknown
    */
-  get(key: string) {
-    return this.value[key];
+  get(key: Key<O>): Value<O> {
+    return this.flatfileRecord.get(key);
   }
 
   /**
@@ -36,8 +68,8 @@ export class DataRecord implements FlatfileRecord {
    * @param {(string|number|object)} value
    * @returns this
    */
-  set(key: string, value: unknown) {
-    this.value[key] = value;
+  set(key: Key<O>, value: Value<O>): this {
+    this.flatfileRecord.set(key, value);
 
     return this;
   }
@@ -49,9 +81,9 @@ export class DataRecord implements FlatfileRecord {
    * @param {function} handler
    * @returns this
    */
-  modify(key: string, handler: (value: unknown) => typeof value): this {
-    const currentValue = this.value[key];
-    this.value[key] = handler(currentValue);
+  modify(key: Key<O>, handler: (value: Value<O>) => typeof value): this {
+    const currentValue = this.flatfileRecord.get(key);
+    this.flatfileRecord.set(key, handler(currentValue));
 
     return this;
   }
@@ -62,13 +94,17 @@ export class DataRecord implements FlatfileRecord {
    * @param {(string|string[])} key
    * @param {string} message
    */
-  addInfo(key: string, message: string): this;
-  addInfo(keys: Array<string>, message: string): this;
-  addInfo(key: unknown, message: string): this {
-    if (G.isString(key)) {
-      // do something
+  addInfo(key: Key<O>, message: string): this;
+  addInfo(keys: Array<Key<O>>, message: string): this;
+  addInfo(keys: unknown, message: string): this {
+    if (G.isArray<Key<O>>(keys)) {
+      const msg = new Message("info", message);
+
+      keys.map((k) => this.flatfileRecord.addMessage(k, msg));
     } else {
-      // do something
+      const msg = new Message("info", message);
+
+      this.flatfileRecord.addMessage(keys as Key<O>, msg);
     }
 
     return this;
@@ -80,13 +116,17 @@ export class DataRecord implements FlatfileRecord {
    * @param {(string|string[])} key
    * @param {string} message
    */
-  addWarning(key: string, message: string): this;
-  addWarning(keys: Array<string>, message: string): this;
-  addWarning(key: unknown, message: string): this {
-    if (G.isString(key)) {
-      // do something
+  addWarning(key: Key<O>, message: string): this;
+  addWarning(keys: Array<Key<O>>, message: string): this;
+  addWarning(keys: unknown, message: string): this {
+    if (G.isArray<Key<O>>(keys)) {
+      const msg = new Message("warn", message);
+
+      keys.map((k) => this.flatfileRecord.addMessage(k, msg));
     } else {
-      // do something
+      const msg = new Message("warn", message);
+
+      this.flatfileRecord.addMessage(keys as Key<O>, msg);
     }
 
     return this;
@@ -98,13 +138,17 @@ export class DataRecord implements FlatfileRecord {
    * @param {(string|string[])} key
    * @param {string} message
    */
-  addError(key: string, message: string): this;
-  addError(keys: Array<string>, message: string): this;
-  addError(key: unknown, message: string): this {
-    if (G.isString(key)) {
-      // do something
+  addError(key: Key<O>, message: string): this;
+  addError(keys: Array<Key<O>>, message: string): this;
+  addError(keys: unknown, message: string): this {
+    if (G.isArray<Key<O>>(keys)) {
+      const msg = new Message("error", message);
+
+      keys.map((k) => this.flatfileRecord.addMessage(k, msg));
     } else {
-      // do something
+      const msg = new Message("error", message);
+
+      this.flatfileRecord.addMessage(keys as Key<O>, msg);
     }
 
     return this;

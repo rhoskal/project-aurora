@@ -214,7 +214,7 @@ export class DateFieldBuilder implements Builder {
   /**
    * Format the date in the UI table but not change the underlying Date type.
    *
-   * @params {string} value - internal standard format string
+   * @param {string} value - internal standard format string
    * @returns this
    */
   withDisplayFormat(value: string): this {
@@ -226,7 +226,7 @@ export class DateFieldBuilder implements Builder {
   /**
    * Format the date on data egress but not change the underlying Date type.
    *
-   * @params {string} value - internal standard format string
+   * @param {string} value - internal standard format string
    * @returns this
    */
   withEgressFormat(value: string): this {

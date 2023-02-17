@@ -146,3 +146,24 @@ export const isNumber = (x: unknown): x is number => typeof x === "number";
  * }
  */
 export const isDate = (x: unknown): x is Date => x instanceof Date;
+
+/**
+ * Helper function to determine if a value is an array of type T.
+ * Useful in if/else statements or ternaries.
+ *
+ * @param {*} x - Any object/value
+ *
+ * @example
+ * if (isArray<string>(x)) {
+ *   ...
+ * } else {
+ *   ...
+ * }
+ */
+export const isArray = <T>(x: unknown): x is Array<T> => {
+  if (!Array.isArray(x)) {
+    return false;
+  }
+
+  return true;
+};

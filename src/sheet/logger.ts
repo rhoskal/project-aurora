@@ -10,7 +10,7 @@ export class Logger implements FlatfileLogger {
   /**
    * Info message
    *
-   * @params {string} message
+   * @param {string} message
    */
   info(message: string): void {
     // console.log(message);
@@ -19,7 +19,7 @@ export class Logger implements FlatfileLogger {
   /**
    * Warning message
    *
-   * @params {string} message
+   * @param {string} message
    */
   warn(message: string): void {
     // console.log(message);
@@ -28,7 +28,7 @@ export class Logger implements FlatfileLogger {
   /**
    * Error message
    *
-   * @params {string} message
+   * @param {string} message
    */
   error(message: string): void {
     // console.log(message);

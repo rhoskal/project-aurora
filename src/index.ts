@@ -6,15 +6,16 @@ import { OptionFieldBuilder as OptionField } from "./field/optionField";
 import { SheetBuilder as Sheet } from "./sheet/sheet";
 import { TextFieldBuilder as TextField } from "./field/textField";
 import { WorkbookBuilder as Workbook } from "./workbook/workbook";
+import { FlatfileRecordBuilder as FlatfileRecord } from "./sheet/flatfileRecord";
 import * as G from "./helpers/typeGuards";
 
 const firstName = new TextField()
-  .withLabel("Contact's legal first Name")
-  .withDescription("Your first name");
+  .withLabel("First Name")
+  .withDescription("Contact's legal first Name");
 
 const lastName = new TextField()
-  .withLabel("Contact's legal last Name")
-  .withDescription("Your last name");
+  .withLabel("Last Name")
+  .withDescription("Contact's legal last Name");
 
 const age = new NumberField()
   .withLabel("Age")
@@ -57,7 +58,8 @@ const email = new TextField()
   });
 
 const emails = new ArrayField<string>()
-  .withLabel("List of emails")
+  .withLabel("Emails")
+  .withDescription("List of emails")
   .withCompute((values) => {
     return values.map((value) => value.trim().toLowerCase());
   });
@@ -97,7 +99,24 @@ const contactsSheet = new Sheet("Contacts")
     });
   })
   .withAction((event) => {});
+// .withAction("records:updated", (event) => {});
 
 const workbook = new Workbook("Fundraiser Contacts")
   .withSheet(contactsSheet)
   .withEnv({ apiKey: "some_key" });
+
+// const record = new FlatfileRecord<{
+//   first_name: null | string;
+//   last_name: null | string;
+// }>({ first_name: "Hans", last_name: "Hoffman" });
+// const fname = record.get("first_name");
+// record.addError(["first_name", "last_name"], "foobar");
+
+// const record2 = new FlatfileRecord<{ age: null | number }>({ age: 18 });
+// const fname2 = record2.get("age");
+
+// const record3 = new FlatfileRecord<{ emails: Array<string> }>({
+//   emails: ["foo@bar.com"],
+// });
+// const x = record3.get("emails");
+// record3.addError("emails", "a");

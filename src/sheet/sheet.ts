@@ -61,8 +61,8 @@ export class SheetBuilder {
   /**
    * Adds a field to the Sheet.
    *
-   * @params {string} key - internal key
-   * @params {Field} field - field type class instantiation
+   * @param {string} key - internal key
+   * @param {Field} field - field type class instantiation
    * @returns this
    */
   withField(key: string, field: Field<unknown>): this {
