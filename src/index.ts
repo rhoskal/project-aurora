@@ -7,6 +7,7 @@ import { SheetBuilder as Sheet } from "./sheet/sheet";
 import { TextFieldBuilder as TextField } from "./field/textField";
 import { WorkbookBuilder as Workbook } from "./workbook/workbook";
 import { FlatfileRecordBuilder as FlatfileRecord } from "./sheet/flatfileRecord";
+import { SpaceConfigBuilder as SpaceConfig } from "./space/spaceConfig";
 import * as G from "./helpers/typeGuards";
 
 const firstName = new TextField()
@@ -84,19 +85,16 @@ const contactsSheet = new Sheet("Contacts")
   .withField("age", age)
   .withField("dob", dob)
   .withCompute(({ records, meta, logger }) => {
-    records.map((record) => {
-      const firstName = record.get("first_name");
-      const lastName = record.get("last_name");
-
-      if (firstName === null && lastName === null) {
-        record.addWarning(["first_name", "last_name"], "One must be present.");
-      }
-
-      // also add async here or `.withComputeAsync(({ records, _session, _logger }) => { })` ??
-      logger.info("howdy");
-
-      return record;
-    });
+    // records.map((record) => {
+    //   const firstName = record.get("first_name");
+    //   const lastName = record.get("last_name");
+    //   if (firstName === null && lastName === null) {
+    //     record.addWarning(["first_name", "last_name"], "One must be present.");
+    //   }
+    //   // also add async here or `.withComputeAsync(({ records, _session, _logger }) => { })` ??
+    //   logger.info("howdy");
+    //   return record;
+    // });
   })
   .withAction((event) => {});
 // .withAction("records:updated", (event) => {});
@@ -120,3 +118,7 @@ const workbook = new Workbook("Fundraiser Contacts")
 // });
 // const x = record3.get("emails");
 // record3.addError("emails", "a");
+
+export default new SpaceConfig("Test")
+  .withSlug("some-slug")
+  .withWorkbook(workbook);
