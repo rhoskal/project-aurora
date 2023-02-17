@@ -2,6 +2,7 @@ import { Builder } from "./builder";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
+type Env = Record<string, unknown>;
 
 class TextField {
   private label: string;
@@ -13,6 +14,7 @@ class TextField {
 
   private value: Nullable<string>;
   private messages: Array<Message>;
+  private env: Env;
 
   constructor() {
     this.label = "";
@@ -24,6 +26,7 @@ class TextField {
 
     this.value = null; // should this be null | string? how to represent no value? We could return a custom type like a Maybe
     this.messages = [];
+    this.env = {};
   }
 
   public setLabel(label: string): void {
@@ -99,12 +102,29 @@ class TextField {
     }
   }
 
+  public async setValidateFnAsync(
+    handler: (
+      value: Nullable<string>,
+      env: Env,
+    ) => undefined | Promise<void | Message>,
+  ): Promise<void> {
+    const msg = await handler(this.value, this.env);
+
+    if (msg) {
+      this.messages.concat(msg);
+    }
+  }
+
   public getValue(): Nullable<string> {
     return this.value;
   }
 
   public getMessages(): Array<Message> {
     return this.messages;
+  }
+
+  public getEnv(): Env {
+    return this.env;
   }
 }
 
@@ -215,6 +235,24 @@ export class TextFieldBuilder implements Builder {
    */
   withValidate(handler: (value: Nullable<string>) => void | Message): this {
     this.textField.setValidateFn(handler);
+
+    return this;
+  }
+
+  /**
+   * Sets the value asynchronously.
+   *
+   * @callback handler
+   * @returns {Promise}
+   * @returns this
+   */
+  withValidateAsync(
+    handler: (
+      value: Nullable<string>,
+      env: Env,
+    ) => undefined | Promise<void | Message>,
+  ): this {
+    this.textField.setValidateFnAsync(handler);
 
     return this;
   }

@@ -1,6 +1,8 @@
 import { Builder } from "./builder";
 import { Message } from "./message";
 
+type Env = Record<string, unknown>;
+
 class OptionField {
   private label: string;
   private description: string;
@@ -11,6 +13,7 @@ class OptionField {
 
   private value: Record<string, unknown>;
   private messages: Array<Message>;
+  private env: Env;
 
   constructor() {
     this.label = "";
@@ -22,6 +25,7 @@ class OptionField {
 
     this.value = {};
     this.messages = [];
+    this.env = {};
   }
 
   public setLabel(label: string): void {
@@ -81,17 +85,11 @@ class OptionField {
     this.value = choices;
   }
 
-  public setChoicesAsync(
-    handler: () => Promise<Record<string, unknown>>,
-  ): void {
-    handler()
-      .then((choices) => {
-        // decode choices to ensure it's the right shape
-        this.value = choices;
-      })
-      .catch((err: unknown) => {
-        // log internally
-      });
+  public async setChoicesAsync(
+    handler: (env: Env) => Promise<Record<string, unknown>>,
+  ): Promise<void> {
+    const choices = await handler(this.env);
+    this.value = choices;
   }
 
   public getValue(): Record<string, unknown> {
@@ -197,7 +195,9 @@ export class OptionFieldBuilder implements Builder {
    * @returns {Promise}
    * @returns this
    */
-  withChoicesAsync(handler: () => Promise<Record<string, unknown>>): this {
+  withChoicesAsync(
+    handler: (env: Env) => Promise<Record<string, unknown>>,
+  ): this {
     this.optionField.setChoicesAsync(handler);
 
     return this;

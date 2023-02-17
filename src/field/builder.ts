@@ -14,5 +14,4 @@ export interface Builder {
   withCompute?(handler: (value: Nullable<unknown>) => unknown): this;
   withValidate?(handler: (value: unknown) => void | Message): this;
   withValidate?(handler: (value: Nullable<unknown>) => void | Message): this;
-  // done(): this;
 }

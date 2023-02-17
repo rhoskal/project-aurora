@@ -1,3 +1,5 @@
+import axios from "axios";
+
 import { ArrayFieldBuilder as ArrayField } from "./field/arrayField";
 import { DateFieldBuilder as DateField } from "./field/dateField";
 import { Message } from "./field/message";
@@ -18,15 +20,6 @@ const lastName = new TextField()
   .withLabel("Last Name")
   .withDescription("Contact's legal last Name");
 
-const age = new NumberField()
-  .withLabel("Age")
-  .withDescription("Contact's current age")
-  .withValidate((value) => {
-    if (G.isNotNil(value) && value < 18) {
-      return new Message("error", "cannot include minors");
-    }
-  });
-
 const dob = new DateField()
   .withLabel("Date of Birth")
   // .withOffset(-7)
@@ -38,10 +31,25 @@ const dob = new DateField()
     }
   });
 
-const email = new TextField()
+const salary = new NumberField().withLabel("Salary").withValidate((value) => {
+  if (G.isNotNil(value) && value < 0) {
+    return new Message("error", "Salary cannot be negative");
+  }
+});
+
+// const age = new NumberField()
+//   .withLabel("Age")
+//   .withReadOnly()
+//   .withVirtual()
+//   .withCompute((value) => {
+//     // how to access dob?
+//     // computed fields need to reference another field
+//   });
+
+const emailSimple = new TextField()
+  .withLabel("Email Simple")
   .withRequired()
   .withUnique()
-  .withVirtual()
   .withCompute((value) => {
     if (G.isNotNil(value)) {
       return value.trim().toLowerCase();
@@ -53,37 +61,67 @@ const email = new TextField()
     if (G.isNotNil(value) && G.isFalsy(value.includes("@"))) {
       return new Message("error", "what the foo bar!?");
     }
-
-    // what if I want to make an API call here?
-    // how to access to env vars?
   });
 
-const emails = new ArrayField<string>()
-  .withLabel("Emails")
-  .withDescription("List of emails")
+const emailAsync = new TextField()
+  .withLabel("Email Async")
+  .withRequired()
+  .withUnique()
+  .withValidateAsync((value, env) => {
+    if (G.isNotNil(value)) {
+      return axios({
+        method: "GET",
+        url: "",
+        headers: {
+          "x-auth-key": `${env.authKey}`,
+        },
+        params: {
+          email: value.trim().toLowerCase(),
+        },
+      })
+        .then(({ data }: { data: { exists: boolean } }) => {
+          if (data.exists) {
+            return new Message("error", "what the foo bar!?");
+          }
+        })
+        .catch((e) => {});
+    }
+  });
+
+const phones = new ArrayField<string>()
+  .withLabel("Phone Numbers")
+  .withDescription("List of phone numbers")
   .withCompute((values) => {
-    return values.map((value) => value.trim().toLowerCase());
+    return values.map((value) => value.trim().replace(/\D/g, ""));
   });
 
 const state = new OptionField()
   .withLabel("State")
+  .withDescription("You better pick Colorado!")
   // .withChoices({
   //   colorado: "Colorado",
   // })
-  .withChoicesAsync(() => {
-    return Promise.resolve({
-      colorado: "Colorado",
-    });
+  .withChoicesAsync((env) => {
+    return axios({
+      method: "GET",
+      url: "",
+      headers: {
+        "x-auth-key": `${env.authKey}`,
+      },
+    })
+      .then(({ data }: { data: Record<string, string> }) => data)
+      .catch((e) => ({}));
   });
 
 const contactsSheet = new Sheet("Contacts")
   .withField("first_name", firstName)
   .withField("last_name", lastName)
-  .withField("email", email)
-  .withField("emails", emails)
+  .withField("emailSimple", emailSimple)
+  .withField("emailAsync", emailAsync)
+  .withField("phones", phones)
   .withField("state", state)
-  .withField("age", age)
   .withField("dob", dob)
+  .withField("salary", salary)
   .withCompute(({ records, meta, logger }) => {
     // records.map((record) => {
     //   const firstName = record.get("first_name");
@@ -101,7 +139,7 @@ const contactsSheet = new Sheet("Contacts")
 
 const workbook = new Workbook("Fundraiser Contacts")
   .withSheet(contactsSheet)
-  .withEnv({ apiKey: "some_key" });
+  .withEnv({ authKey: "some_key" });
 
 // const record = new FlatfileRecord<{
 //   first_name: null | string;
