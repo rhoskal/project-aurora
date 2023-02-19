@@ -1,27 +1,26 @@
 import axios from "axios";
 
-import { ArrayFieldBuilder as ArrayField } from "./field/arrayField";
-import { DateFieldBuilder as DateField } from "./field/dateField";
+import { ArrayFieldBuilder } from "./field/arrayField";
+import { DateFieldBuilder } from "./field/dateField";
 import { Message } from "./field/message";
-import { NumberFieldBuilder as NumberField } from "./field/numberField";
-import { OptionFieldBuilder as OptionField } from "./field/optionField";
-import { SheetBuilder as Sheet } from "./sheet/sheet";
-import { TextFieldBuilder as TextField } from "./field/textField";
-import { WorkbookBuilder as Workbook } from "./workbook/workbook";
-import { FlatfileRecordBuilder as FlatfileRecord } from "./sheet/flatfileRecord";
+import { NumberFieldBuilder } from "./field/numberField";
+import { OptionFieldBuilder } from "./field/optionField";
+import { SheetBuilder } from "./sheet/sheet";
+import { TextFieldBuilder } from "./field/textField";
+import { WorkbookBuilder } from "./workbook/workbook";
+// import { FlatfileRecordBuilder as FlatfileRecord } from "./sheet/flatfileRecord";
 import { SpaceConfigBuilder as SpaceConfig } from "./space/spaceConfig";
 import * as G from "./helpers/typeGuards";
 
-const firstName = new TextField()
-  .withLabel("First Name")
-  .withDescription("Contact's legal first Name");
+const firstName = new TextFieldBuilder("First Name")
+  .withDescription("Contact's legal first Name")
+  .build();
 
-const lastName = new TextField()
-  .withLabel("Last Name")
-  .withDescription("Contact's legal last Name");
+const lastName = new TextFieldBuilder("Last Name")
+  .withDescription("Contact's legal last Name")
+  .build();
 
-const dob = new DateField()
-  .withLabel("Date of Birth")
+const dob = new DateFieldBuilder("Date of Birth")
   // .withOffset(-7)
   // .withLocale("fr")
   .withDisplayFormat("dd/MM/yyyy")
@@ -29,13 +28,16 @@ const dob = new DateField()
     if (G.isNotNil(value) && value > new Date()) {
       return new Message("error", "dob cannot be in the future");
     }
-  });
+  })
+  .build();
 
-const salary = new NumberField().withLabel("Salary").withValidate((value) => {
-  if (G.isNotNil(value) && value < 0) {
-    return new Message("error", "Salary cannot be negative");
-  }
-});
+const salary = new NumberFieldBuilder("Salary")
+  .withValidate((value) => {
+    if (G.isNotNil(value) && value < 0) {
+      return new Message("error", "Salary cannot be negative");
+    }
+  })
+  .build();
 
 // const age = new NumberField()
 //   .withLabel("Age")
@@ -46,8 +48,7 @@ const salary = new NumberField().withLabel("Salary").withValidate((value) => {
 //     // computed fields need to reference another field
 //   });
 
-const emailSimple = new TextField()
-  .withLabel("Email Simple")
+const emailSimple = new TextFieldBuilder("Email Simple")
   .withRequired()
   .withUnique()
   .withCompute((value) => {
@@ -61,13 +62,13 @@ const emailSimple = new TextField()
     if (G.isNotNil(value) && G.isFalsy(value.includes("@"))) {
       return new Message("error", "what the foo bar!?");
     }
-  });
+  })
+  .build();
 
-const emailAsync = new TextField()
-  .withLabel("Email Async")
+const emailAsync = new TextFieldBuilder("Email Async")
   .withRequired()
   .withUnique()
-  .withValidateAsync((value, env) => {
+  .withValidateAsync(async (value, env) => {
     if (G.isNotNil(value)) {
       return axios({
         method: "GET",
@@ -84,24 +85,24 @@ const emailAsync = new TextField()
             return new Message("error", "what the foo bar!?");
           }
         })
-        .catch((e) => {});
+        .catch((_e) => {});
     }
-  });
+  })
+  .build();
 
-const phones = new ArrayField<string>()
-  .withLabel("Phone Numbers")
+const phones = new ArrayFieldBuilder<string>("Phone Numbers")
   .withDescription("List of phone numbers")
   .withCompute((values) => {
     return values.map((value) => value.trim().replace(/\D/g, ""));
-  });
+  })
+  .build();
 
-const state = new OptionField()
-  .withLabel("State")
+const state = new OptionFieldBuilder("State")
   .withDescription("You better pick Colorado!")
   // .withChoices({
   //   colorado: "Colorado",
   // })
-  .withChoicesAsync((env) => {
+  .withChoicesAsync(async (env) => {
     return axios({
       method: "GET",
       url: "",
@@ -110,10 +111,11 @@ const state = new OptionField()
       },
     })
       .then(({ data }: { data: Record<string, string> }) => data)
-      .catch((e) => ({}));
-  });
+      .catch((_e) => ({}));
+  })
+  .build();
 
-const contactsSheet = new Sheet("Contacts")
+const contactsSheet = new SheetBuilder("Contacts")
   .withField("first_name", firstName)
   .withField("last_name", lastName)
   .withField("emailSimple", emailSimple)
@@ -122,24 +124,26 @@ const contactsSheet = new Sheet("Contacts")
   .withField("state", state)
   .withField("dob", dob)
   .withField("salary", salary)
-  .withCompute(({ records, meta, logger }) => {
-    // records.map((record) => {
-    //   const firstName = record.get("first_name");
-    //   const lastName = record.get("last_name");
-    //   if (firstName === null && lastName === null) {
-    //     record.addWarning(["first_name", "last_name"], "One must be present.");
-    //   }
-    //   // also add async here or `.withComputeAsync(({ records, _session, _logger }) => { })` ??
-    //   logger.info("howdy");
-    //   return record;
-    // });
-  })
-  .withAction((event) => {});
-// .withAction("records:updated", (event) => {});
+  // .withCompute(({ records, env, logger }) => {
+  //   records.map((record) => {
+  //     const firstName = record.get("first_name");
+  //     const lastName = record.get("last_name");
+  //     if (firstName === null && lastName === null) {
+  //       record.addWarning(["first_name", "last_name"], "One must be present.");
+  //     }
+  //     // also add async here or `.withComputeAsync(({ records, _session, _logger }) => { })` ??
+  //     logger.info("howdy");
+  //     return record;
+  //   });
+  // })
+  // .withAction((event) => {})
+  // .withAction("records:updated", (event) => {})
+  .build();
 
-const workbook = new Workbook("Fundraiser Contacts")
+const workbook = new WorkbookBuilder("Fundraiser Contacts")
   .withSheet(contactsSheet)
-  .withEnv({ authKey: "some_key" });
+  .withEnv({ authKey: "some_key" })
+  .build();
 
 // const record = new FlatfileRecord<{
 //   first_name: null | string;

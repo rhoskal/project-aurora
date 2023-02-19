@@ -1,8 +1,9 @@
-import { ArrayFieldBuilder as ArrayField } from "../field/arrayField";
-import { DateFieldBuilder as DateField } from "../field/dateField";
-import { NumberFieldBuilder as NumberField } from "../field/numberField";
-import { OptionFieldBuilder as OptionField } from "../field/optionField";
-import { TextFieldBuilder as TextField } from "../field/textField";
+import { ArrayField } from "../field/arrayField";
+import { DateField } from "../field/dateField";
+import { NumberField } from "../field/numberField";
+import { OptionField } from "../field/optionField";
+import { TextField } from "../field/textField";
+import * as G from "../helpers/typeGuards";
 import { FlatfileRecord } from "./flatfileRecord";
 import { Logger } from "./logger";
 
@@ -13,49 +14,80 @@ type Field<T> =
   | DateField
   | ArrayField<T>;
 
-interface Meta {}
+interface Env {}
 
-class Sheet {
-  private readonly name: string;
-  private records: Array<FlatfileRecord>;
-  private fields: Map<string, Field<unknown>>;
-  private readonly logger: Logger;
+export class Sheet<T = never> {
+  private readonly displayName: string;
+  private readonly fields: Map<string, Field<T extends infer F ? F : never>>;
+  private readonly computeFn?: (opts: {
+    records: Array<FlatfileRecord>;
+    env: Env;
+    logger: Logger;
+  }) => void;
 
-  constructor(name: string) {
-    this.name = name;
-    this.records = [];
-    this.fields = new Map();
-    this.logger = new Logger();
-  }
+  private _records: Array<FlatfileRecord>;
+  private readonly _logger: Logger;
 
-  public getName(): string {
-    return this.name;
-  }
-
-  public addField(key: string, field: Field<unknown>): void {
-    this.fields.set(key, field);
-  }
-
-  public setComputeFn(
-    handler: (opts: {
+  constructor(params: {
+    displayName: string;
+    fields: Map<string, Field<T extends infer F ? F : never>>;
+    computeFn?: (opts: {
       records: Array<FlatfileRecord>;
-      meta: Meta;
+      env: Env;
       logger: Logger;
-    }) => void,
-  ): void {
-    handler({ records: this.records, meta: {}, logger: this.logger });
+    }) => void;
+  }) {
+    // params
+    this.displayName = params.displayName;
+    this.fields = params.fields;
+    this.computeFn = params.computeFn;
+
+    // internal
+    this._records = [];
+    this._logger = new Logger();
   }
 
-  public addAction(handler: (event: unknown) => void): void {
-    handler(null);
+  /* DisplayName */
+
+  public getDisplayName(): string {
+    return this.displayName;
+  }
+
+  /* Compute Fn */
+
+  private _runComputeFn(): void {
+    if (G.isNotNil(this.computeFn)) {
+      const newValue = this.computeFn({
+        records: this._records,
+        env: {},
+        logger: this._logger,
+      });
+
+      // this.setValue(newValue);
+    }
+  }
+
+  /**
+   * Runs all sync and async operations.
+   */
+  public run(): void {
+    this._runComputeFn();
   }
 }
 
-export class SheetBuilder {
-  private sheet: Sheet;
+export class SheetBuilder<T = never> {
+  private readonly displayName: string;
+  // private fields: Map<string, Field<unknown>>;
+  private fields: Map<string, Field<T extends infer F ? F : never>>;
+  private computeFn?: (opts: {
+    records: Array<FlatfileRecord>;
+    env: Env;
+    logger: Logger;
+  }) => void;
 
-  constructor(name: string) {
-    this.sheet = new Sheet(name);
+  constructor(displayName: string) {
+    this.displayName = displayName;
+    this.fields = new Map();
   }
 
   /**
@@ -65,8 +97,14 @@ export class SheetBuilder {
    * @param {Field} field - field type class instantiation
    * @returns this
    */
-  withField(key: string, field: Field<unknown>): this {
-    this.sheet.addField(key, field);
+  //   withField(key: string, field: Field<unknown>): this {
+  //     this.fields = this.fields.set(key, field);
+  //
+  //     return this;
+  //   }
+
+  withField(key: string, field: Field<any>): this {
+    this.fields = this.fields.set(key, field);
 
     return this;
   }
@@ -79,11 +117,11 @@ export class SheetBuilder {
   withCompute(
     handler: (opts: {
       records: Array<FlatfileRecord>;
-      meta: Meta;
+      env: Env;
       logger: Logger;
     }) => void,
   ): this {
-    this.sheet.setComputeFn(handler);
+    this.computeFn = handler;
 
     return this;
   }
@@ -93,9 +131,26 @@ export class SheetBuilder {
    *
    * @returns this
    */
-  withAction(handler: (event: unknown) => void): this {
-    this.sheet.addAction(handler);
+  //   withAction(handler: (event: unknown) => void): this {
+  //     this.sheet.addAction(handler);
+  //
+  //     return this;
+  //   }
 
-    return this;
+  /**
+   * Final call to return an instantiated TextField.
+   *
+   * @returns TextField
+   */
+  build(): Sheet {
+    if (this.fields.size === 0) {
+      throw new Error("A Sheet must include at least one field.");
+    }
+
+    return new Sheet({
+      displayName: this.displayName,
+      fields: this.fields,
+      computeFn: this.computeFn,
+    });
   }
 }

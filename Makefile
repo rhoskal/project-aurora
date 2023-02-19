@@ -68,3 +68,11 @@ lint-fix: ## Lint code w/ fixes
 .PHONY: run
 run: ## Run code
 	node dist/main.cjs.min.js
+
+.PHONY: test
+test: ## Test code
+	yarn jest
+
+.PHONY: test-watch
+test-watch: ## Test code
+	yarn jest --watch

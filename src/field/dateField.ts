@@ -1,146 +1,225 @@
 import { Builder } from "./builder";
+import * as G from "../helpers/typeGuards";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
+type Env = Record<string, unknown>;
 
-class DateField {
-  private label: string;
-  private description: string;
-  private isRequired: boolean;
-  private isVirtual: boolean;
-  private isReadOnly: boolean;
-  private isUnique: boolean;
-  private displayFormat: Nullable<string>;
-  private egressFormat: Nullable<string>;
+export class DateField {
+  private readonly label: string;
+  private readonly description: string;
+  private readonly isRequired: boolean;
+  private readonly isReadOnly: boolean;
+  private readonly isUnique: boolean;
+  private readonly defaultValue: Nullable<Date>;
+  private readonly displayFormat: string;
+  private readonly egressFormat: string;
+  private readonly computeFn?: (value: Nullable<Date>) => Date;
+  private readonly validateFn?: (value: Nullable<Date>) => void | Message;
+  private readonly validateFnAsync?: (
+    value: Nullable<Date>,
+    env: Env,
+  ) => Promise<void | Message>;
 
-  private value: Nullable<Date>;
-  private messages: Array<Message>;
+  private _value: Nullable<Date>;
+  private _messages: Array<Message>;
+  private _env: Env;
 
-  constructor() {
-    this.label = "";
-    this.description = "";
-    this.isRequired = false;
-    this.isVirtual = false;
-    this.isReadOnly = false;
-    this.isUnique = false;
-    this.displayFormat = null;
-    this.egressFormat = null;
+  constructor(params: {
+    label: string;
+    description?: string;
+    isRequired?: boolean;
+    isReadOnly?: boolean;
+    isUnique?: boolean;
+    defaultValue?: Nullable<Date>;
+    displayFormat?: string;
+    egressFormat?: string;
+    computeFn?: (value: Nullable<Date>) => Date;
+    validateFn?: (value: Nullable<Date>) => void | Message;
+    validateFnAsync?: (
+      value: Nullable<Date>,
+      env: Env,
+    ) => Promise<void | Message>;
+  }) {
+    // params
+    this.label = params.label;
+    this.description = G.isUndefined(params.description)
+      ? ""
+      : params.description;
+    this.isRequired = G.isUndefined(params.isRequired)
+      ? false
+      : params.isRequired;
+    this.isReadOnly = G.isUndefined(params.isReadOnly)
+      ? false
+      : params.isReadOnly;
+    this.isUnique = G.isUndefined(params.isUnique) ? false : params.isUnique;
+    this.defaultValue = G.isUndefined(params.defaultValue)
+      ? null
+      : params.defaultValue;
+    this.displayFormat = G.isUndefined(params.displayFormat)
+      ? ""
+      : params.displayFormat;
+    this.egressFormat = G.isUndefined(params.egressFormat)
+      ? ""
+      : params.egressFormat;
+    this.computeFn = params.computeFn;
+    this.validateFn = params.validateFn;
+    this.validateFnAsync = params.validateFnAsync;
 
-    this.value = null;
-    this.messages = [];
+    // internal
+    this._value = null;
+    this._messages = [];
+    this._env = {};
   }
 
-  public setLabel(label: string): void {
-    this.label = label;
-  }
+  /* Label */
 
   public getLabel(): string {
     return this.label;
   }
 
-  public setDescription(description: string): void {
-    this.description = description;
-  }
+  /* Description */
 
   public getDescription(): string {
     return this.description;
   }
 
-  public setIsRequired(): void {
-    this.isRequired = true;
-  }
+  /* Required */
 
   public getIsRequired(): boolean {
     return this.isRequired;
   }
 
-  public setIsVirtual() {
-    if (this.isRequired) {
-      throw Error("Cannot hide a required field from mapping.");
-    }
-
-    this.isVirtual = true;
-    this.isReadOnly = true;
-  }
-
-  public getIsVirtual(): boolean {
-    return this.isVirtual;
-  }
-
-  public setIsReadOnly(): void {
-    this.isReadOnly = true;
-  }
+  /* ReadOnly */
 
   public getIsReadOnly(): boolean {
     return this.isReadOnly;
   }
 
-  public setIsUnique(): void {
-    this.isUnique = true;
-  }
+  /* Unique */
 
   public getIsUnique(): boolean {
     return this.isUnique;
   }
 
-  public setDefaultValue(value: Date): void {
-    if (this.value === null) {
-      this.value = value;
-    }
-  }
+  /* Display Format */
 
-  // withOffset(value: number): this {
-  //   return this;
-  // }
-
-  public setDisplayFormat(value: string): void {
-    this.displayFormat = value;
-  }
-
-  public getDisplayFormat(): Nullable<string> {
+  public getDisplayFormat(): string {
     return this.displayFormat;
   }
 
-  public setEgressFormat(value: string): void {
-    this.egressFormat = value;
-  }
+  /* Egress Format */
 
-  public getEgressFormat(): Nullable<string> {
+  public getEgressFormat(): string {
     return this.egressFormat;
   }
 
-  public setComputeFn(handler: (value: Nullable<Date>) => Date): void {
-    this.value = handler(this.value);
-  }
+  /* Compute Fn */
 
-  public setValidateFn(
-    handler: (value: Nullable<Date>) => void | Message,
-  ): void {
-    const msg = handler(this.value);
-
-    if (msg) {
-      this.messages.concat(msg);
+  private _runComputeFn(): void {
+    if (G.isNotNil(this.computeFn)) {
+      const newValue = this.computeFn(this._value);
+      this.setValue(newValue);
     }
   }
-}
 
-export class DateFieldBuilder implements Builder {
-  private dateField: DateField;
+  /* Validate Fn */
 
-  constructor() {
-    this.dateField = new DateField();
+  private _runValidateFn(): void {
+    if (G.isNotNil(this.validateFn)) {
+      const message = this.validateFn(this._value);
+
+      if (message) {
+        this._addMessage(message);
+      }
+    }
+  }
+
+  private async _runValidateAsync(): Promise<void> {
+    if (G.isNotNil(this.validateFnAsync)) {
+      const message = await this.validateFnAsync(this._value, this._env);
+
+      if (message) {
+        this._addMessage(message);
+      }
+    }
   }
 
   /**
-   * Sets the value in the UI table the user will see.
-   *
-   * @param {string} label - column header
-   * @returns this
+   * Runs all sync and async operations.
    */
-  withLabel(label: string): this {
-    this.dateField.setLabel(label);
+  public run(): void {
+    this._runComputeFn();
+    this._runValidateFn();
+    this._runValidateAsync();
+  }
 
-    return this;
+  /* Value */
+
+  public getValue(): Nullable<Date> {
+    if (G.isNull(this._value) && G.isNotNil(this.defaultValue)) {
+      return this.defaultValue;
+    } else {
+      return this._value;
+    }
+  }
+
+  public setValue(value: Date): void {
+    this._value = value;
+  }
+
+  /* Messages */
+
+  public getMessages(): Array<Message> {
+    return this._messages;
+  }
+
+  private _addMessage(message: Message): void {
+    this._messages = this._messages.concat(message);
+  }
+
+  /* Env */
+
+  public getEnv(): Env {
+    return this._env;
+  }
+
+  public setEnv(env: Env): void {
+    this._env = env;
+  }
+}
+
+/**
+ * Builder class for a DateField.
+ *
+ * @example
+ * const dob = new DateFieldBuilder("Date of Birth")
+ *   .withDisplayFormat("dd/MM/yyyy")
+ *   .withValidate((value) => {
+ *     if (G.isNotNil(value) && value > new Date()) {
+ *       return new Message("error", "dob cannot be in the future");
+ *     }
+ *   })
+ *   .build();
+ */
+export class DateFieldBuilder implements Builder<DateField> {
+  private readonly label: string;
+  private description?: string;
+  private isRequired?: boolean;
+  private isReadOnly?: boolean;
+  private isUnique?: boolean;
+  private defaultValue?: Nullable<Date>;
+  private displayFormat?: string;
+  private egressFormat?: string;
+  private computeFn?: (value: Nullable<Date>) => Date;
+  private validateFn?: (value: Nullable<Date>) => void | Message;
+  private validateFnAsync?: (
+    value: Nullable<Date>,
+    env: Env,
+  ) => Promise<void | Message>;
+
+  constructor(label: string) {
+    this.label = label;
   }
 
   /**
@@ -150,7 +229,7 @@ export class DateFieldBuilder implements Builder {
    * @returns this
    */
   withDescription(description: string): this {
-    this.dateField.setDescription(description);
+    this.description = description;
 
     return this;
   }
@@ -161,18 +240,7 @@ export class DateFieldBuilder implements Builder {
    * @returns this
    */
   withRequired(): this {
-    this.dateField.setIsRequired();
-
-    return this;
-  }
-
-  /**
-   * Specifies the field is only visible during the review stage and makes it inherently a read-only field.
-   *
-   * @returns this
-   */
-  withVirtual(): this {
-    this.dateField.setIsVirtual();
+    this.isRequired = true;
 
     return this;
   }
@@ -183,7 +251,7 @@ export class DateFieldBuilder implements Builder {
    * @returns this
    */
   withReadOnly(): this {
-    this.dateField.setIsReadOnly();
+    this.isReadOnly = true;
 
     return this;
   }
@@ -194,7 +262,7 @@ export class DateFieldBuilder implements Builder {
    * @returns this
    */
   withUnique(): this {
-    this.dateField.setIsUnique();
+    this.isUnique = true;
 
     return this;
   }
@@ -206,7 +274,7 @@ export class DateFieldBuilder implements Builder {
    * @returns this
    */
   withDefault(value: Date): this {
-    this.dateField.setDefaultValue(value);
+    this.defaultValue = value;
 
     return this;
   }
@@ -218,7 +286,7 @@ export class DateFieldBuilder implements Builder {
    * @returns this
    */
   withDisplayFormat(value: string): this {
-    this.dateField.setDisplayFormat(value);
+    this.displayFormat = value;
 
     return this;
   }
@@ -230,7 +298,7 @@ export class DateFieldBuilder implements Builder {
    * @returns this
    */
   withEgressFormat(value: string): this {
-    this.dateField.setEgressFormat(value);
+    this.egressFormat = value;
 
     return this;
   }
@@ -242,20 +310,56 @@ export class DateFieldBuilder implements Builder {
    * @returns this
    */
   withCompute(handler: (value: Nullable<Date>) => Date): this {
-    this.dateField.setComputeFn(handler);
+    this.computeFn = handler;
 
     return this;
   }
 
   /**
-   * Validate the current value against certian conditions and display a message to the user when those conditions are not met.
+   * Validate the current value against certain conditions and display a message to the user when those conditions are not met.
    *
    * @callback handler
    * @returns this
    */
   withValidate(handler: (value: Nullable<Date>) => void | Message): this {
-    this.dateField.setValidateFn(handler);
+    this.validateFn = handler;
 
     return this;
+  }
+
+  /**
+   * Sets the value asynchronously.
+   *
+   * @callback handler
+   * @returns {Promise}
+   * @returns this
+   */
+  withValidateAsync(
+    handler: (value: Nullable<Date>, env: Env) => Promise<void | Message>,
+  ): this {
+    this.validateFnAsync = handler;
+
+    return this;
+  }
+
+  /**
+   * Final call to return an instantiated TextField.
+   *
+   * @returns DateField
+   */
+  build(): DateField {
+    return new DateField({
+      label: this.label,
+      description: this.description,
+      isRequired: this.isRequired,
+      isUnique: this.isUnique,
+      isReadOnly: this.isReadOnly,
+      defaultValue: this.defaultValue,
+      displayFormat: this.displayFormat,
+      egressFormat: this.egressFormat,
+      computeFn: this.computeFn,
+      validateFn: this.validateFn,
+      validateFnAsync: this.validateFnAsync,
+    });
   }
 }

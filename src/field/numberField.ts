@@ -1,130 +1,196 @@
 import { Builder } from "./builder";
+import * as G from "../helpers/typeGuards";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
+type Env = Record<string, unknown>;
 
-class NumberField {
-  private label: string;
-  private description: string;
-  private isRequired: boolean;
-  private isVirtual: boolean;
-  private isReadOnly: boolean;
-  private isUnique: boolean;
+export class NumberField {
+  private readonly label: string;
+  private readonly description: string;
+  private readonly isRequired: boolean;
+  private readonly isReadOnly: boolean;
+  private readonly isUnique: boolean;
+  private readonly defaultValue: Nullable<number>;
+  private readonly computeFn?: (value: Nullable<number>) => number;
+  private readonly validateFn?: (value: Nullable<number>) => void | Message;
+  private readonly validateFnAsync?: (
+    value: Nullable<number>,
+    env: Env,
+  ) => Promise<void | Message>;
 
-  private value: Nullable<number>;
-  private messages: Array<Message>;
+  private _value: Nullable<number>;
+  private _messages: Array<Message>;
+  private _env: Env;
 
-  constructor() {
-    this.label = "";
-    this.description = "";
-    this.isRequired = false;
-    this.isVirtual = false;
-    this.isReadOnly = false;
-    this.isUnique = false;
+  constructor(params: {
+    label: string;
+    description?: string;
+    isRequired?: boolean;
+    isReadOnly?: boolean;
+    isUnique?: boolean;
+    defaultValue?: Nullable<number>;
+    computeFn?: (value: Nullable<number>) => number;
+    validateFn?: (value: Nullable<number>) => void | Message;
+    validateFnAsync?: (
+      value: Nullable<number>,
+      env: Env,
+    ) => Promise<void | Message>;
+  }) {
+    // params
+    this.label = params.label;
+    this.description = G.isUndefined(params.description)
+      ? ""
+      : params.description;
+    this.isRequired = G.isUndefined(params.isRequired)
+      ? false
+      : params.isRequired;
+    this.isReadOnly = G.isUndefined(params.isReadOnly)
+      ? false
+      : params.isReadOnly;
+    this.isUnique = G.isUndefined(params.isUnique) ? false : params.isUnique;
+    this.defaultValue = G.isUndefined(params.defaultValue)
+      ? null
+      : params.defaultValue;
+    this.computeFn = params.computeFn;
+    this.validateFn = params.validateFn;
+    this.validateFnAsync = params.validateFnAsync;
 
-    this.value = null;
-    this.messages = [];
+    // internal
+    this._value = null;
+    this._messages = [];
+    this._env = {};
   }
 
-  public setLabel(label: string): void {
-    this.label = label;
-  }
+  /* Label */
 
   public getLabel(): string {
     return this.label;
   }
 
-  public setDescription(description: string): void {
-    this.description = description;
-  }
+  /* Description */
 
   public getDescription(): string {
     return this.description;
   }
 
-  public setIsRequired(): void {
-    this.isRequired = true;
-  }
+  /* Required */
 
   public getIsRequired(): boolean {
     return this.isRequired;
   }
 
-  public setIsVirtual() {
-    if (this.isRequired) {
-      throw Error("Cannot hide a required field from mapping.");
-    }
-
-    this.isVirtual = true;
-    this.isReadOnly = true;
-  }
-
-  public getIsVirtual(): boolean {
-    return this.isVirtual;
-  }
-
-  public setIsReadOnly(): void {
-    this.isReadOnly = true;
-  }
+  /* ReadOnly */
 
   public getIsReadOnly(): boolean {
     return this.isReadOnly;
   }
 
-  public setIsUnique(): void {
-    this.isUnique = true;
-  }
+  /* Unique */
 
   public getIsUnique(): boolean {
     return this.isUnique;
   }
 
-  public setDefaultValue(value: number): void {
-    if (this.value === null) {
-      this.value = value;
+  /* Compute Fn */
+
+  private _runComputeFn(): void {
+    if (G.isNotNil(this.computeFn)) {
+      const newValue = this.computeFn(this._value);
+      this.setValue(newValue);
     }
   }
 
-  public setComputeFn(handler: (value: Nullable<number>) => number): void {
-    this.value = handler(this.value);
-  }
+  /* Validate Fn */
 
-  public setValidateFn(
-    handler: (value: Nullable<number>) => void | Message,
-  ): void {
-    const msg = handler(this.value);
+  private _runValidateFn(): void {
+    if (G.isNotNil(this.validateFn)) {
+      const message = this.validateFn(this._value);
 
-    if (msg) {
-      this.messages.concat(msg);
+      if (message) {
+        this._addMessage(message);
+      }
     }
   }
 
-  public getValue(): Nullable<number> {
-    return this.value;
-  }
+  private async _runValidateAsync(): Promise<void> {
+    if (G.isNotNil(this.validateFnAsync)) {
+      const message = await this.validateFnAsync(this._value, this._env);
 
-  public getMessages(): Array<Message> {
-    return this.messages;
-  }
-}
-
-export class NumberFieldBuilder implements Builder {
-  private numberField: NumberField;
-
-  constructor() {
-    this.numberField = new NumberField();
+      if (message) {
+        this._addMessage(message);
+      }
+    }
   }
 
   /**
-   * Sets the value in the UI table the user will see.
-   *
-   * @param {string} label - column header
-   * @returns this
+   * Runs all sync and async operations.
    */
-  withLabel(label: string): this {
-    this.numberField.setLabel(label);
+  public run(): void {
+    this._runComputeFn();
+    this._runValidateFn();
+    this._runValidateAsync();
+  }
 
-    return this;
+  /* Value */
+
+  public getValue(): Nullable<number> {
+    if (G.isNull(this._value) && G.isNotNil(this.defaultValue)) {
+      return this.defaultValue;
+    } else {
+      return this._value;
+    }
+  }
+
+  public setValue(value: number): void {
+    this._value = value;
+  }
+
+  /* Messages */
+
+  public getMessages(): Array<Message> {
+    return this._messages;
+  }
+
+  private _addMessage(message: Message): void {
+    this._messages = this._messages.concat(message);
+  }
+
+  /* Env */
+
+  public getEnv(): Env {
+    return this._env;
+  }
+
+  public setEnv(env: Env): void {
+    this._env = env;
+  }
+}
+
+/**
+ * Builder class for a NumberField.
+ *
+ * @example
+ * const age = new NumberFieldBuilder("Age")
+ *   .withDescription("Contact's age")
+ *   .build();
+ */
+export class NumberFieldBuilder implements Builder<NumberField> {
+  private readonly label: string;
+  private description?: string;
+  private isRequired?: boolean;
+  private isReadOnly?: boolean;
+  private isUnique?: boolean;
+  private defaultValue?: Nullable<number>;
+  private computeFn?: (value: Nullable<number>) => number;
+  private validateFn?: (value: Nullable<number>) => void | Message;
+  private validateFnAsync?: (
+    value: Nullable<number>,
+    env: Env,
+  ) => Promise<void | Message>;
+
+  constructor(label: string) {
+    this.label = label;
   }
 
   /**
@@ -134,7 +200,7 @@ export class NumberFieldBuilder implements Builder {
    * @returns this
    */
   withDescription(description: string): this {
-    this.numberField.setDescription(description);
+    this.description = description;
 
     return this;
   }
@@ -145,18 +211,7 @@ export class NumberFieldBuilder implements Builder {
    * @returns this
    */
   withRequired(): this {
-    this.numberField.setIsRequired();
-
-    return this;
-  }
-
-  /**
-   * Specifies the field is only visible during the review stage and makes it inherently a read-only field.
-   *
-   * @returns this
-   */
-  withVirtual(): this {
-    this.numberField.setIsVirtual();
+    this.isRequired = true;
 
     return this;
   }
@@ -167,7 +222,7 @@ export class NumberFieldBuilder implements Builder {
    * @returns this
    */
   withReadOnly(): this {
-    this.numberField.setIsReadOnly();
+    this.isReadOnly = true;
 
     return this;
   }
@@ -178,7 +233,7 @@ export class NumberFieldBuilder implements Builder {
    * @returns this
    */
   withUnique(): this {
-    this.numberField.setIsUnique();
+    this.isUnique = true;
 
     return this;
   }
@@ -190,7 +245,7 @@ export class NumberFieldBuilder implements Builder {
    * @returns this
    */
   withDefault(value: number): this {
-    this.numberField.setDefaultValue(value);
+    this.defaultValue = value;
 
     return this;
   }
@@ -202,20 +257,54 @@ export class NumberFieldBuilder implements Builder {
    * @returns this
    */
   withCompute(handler: (value: Nullable<number>) => number): this {
-    this.numberField.setComputeFn(handler);
+    this.computeFn = handler;
 
     return this;
   }
 
   /**
-   * Validate the current value against certian conditions and display a message to the user when those conditions are not met.
+   * Validate the current value against certain conditions and display a message to the user when those conditions are not met.
    *
    * @callback handler
    * @returns this
    */
   withValidate(handler: (value: Nullable<number>) => void | Message): this {
-    this.numberField.setValidateFn(handler);
+    this.validateFn = handler;
 
     return this;
+  }
+
+  /**
+   * Sets the value asynchronously.
+   *
+   * @callback handler
+   * @returns {Promise}
+   * @returns this
+   */
+  withValidateAsync(
+    handler: (value: Nullable<number>, env: Env) => Promise<void | Message>,
+  ): this {
+    this.validateFnAsync = handler;
+
+    return this;
+  }
+
+  /**
+   * Final call to return an instantiated TextField.
+   *
+   * @returns TextField
+   */
+  build(): NumberField {
+    return new NumberField({
+      label: this.label,
+      description: this.description,
+      isRequired: this.isRequired,
+      isUnique: this.isUnique,
+      isReadOnly: this.isReadOnly,
+      defaultValue: this.defaultValue,
+      computeFn: this.computeFn,
+      validateFn: this.validateFn,
+      validateFnAsync: this.validateFnAsync,
+    });
   }
 }

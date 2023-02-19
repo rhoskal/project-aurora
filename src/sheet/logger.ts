@@ -13,7 +13,7 @@ export class Logger implements FlatfileLogger {
    * @param {string} message
    */
   info(message: string): void {
-    // console.log(message);
+    console.log(message);
   }
 
   /**
@@ -22,7 +22,7 @@ export class Logger implements FlatfileLogger {
    * @param {string} message
    */
   warn(message: string): void {
-    // console.log(message);
+    console.warn(message);
   }
 
   /**
@@ -31,6 +31,6 @@ export class Logger implements FlatfileLogger {
    * @param {string} message
    */
   error(message: string): void {
-    // console.log(message);
+    console.error(message);
   }
 }

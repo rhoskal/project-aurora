@@ -1,123 +1,135 @@
 import { Builder } from "./builder";
+import * as G from "../helpers/typeGuards";
 import { Message } from "./message";
 
+type Nullable<T> = null | T;
 type Env = Record<string, unknown>;
 
-class OptionField {
-  private label: string;
-  private description: string;
-  private isRequired: boolean;
-  private isVirtual: boolean;
-  private isReadOnly: boolean;
-  private isUnique: boolean;
+export class OptionField {
+  private readonly label: string;
+  private readonly description: string;
+  private readonly isRequired: boolean;
+  private choices: Record<string, unknown>;
+  private readonly choicesFnAsync?: (
+    env: Env,
+  ) => Promise<Record<string, unknown>>;
 
-  private value: Record<string, unknown>;
-  private messages: Array<Message>;
-  private env: Env;
+  private _value: Nullable<string>;
+  private _messages: Array<Message>;
+  private _env: Env;
 
-  constructor() {
-    this.label = "";
-    this.description = "";
-    this.isRequired = false;
-    this.isVirtual = false;
-    this.isReadOnly = false;
-    this.isUnique = false;
+  constructor(params: {
+    label: string;
+    description?: string;
+    isRequired?: boolean;
+    choices?: Record<string, unknown>;
+    choicesFnAsync?: (env: Env) => Promise<Record<string, unknown>>;
+  }) {
+    // params
+    this.label = params.label;
+    this.description = G.isUndefined(params.description)
+      ? ""
+      : params.description;
+    this.isRequired = G.isUndefined(params.isRequired)
+      ? false
+      : params.isRequired;
+    this.choices = G.isUndefined(params.choices) ? {} : params.choices;
+    this.choicesFnAsync = params.choicesFnAsync;
 
-    this.value = {};
-    this.messages = [];
-    this.env = {};
+    // internal
+    this._value = null;
+    this._messages = [];
+    this._env = {};
   }
 
-  public setLabel(label: string): void {
-    this.label = label;
-  }
+  /* Label */
 
   public getLabel(): string {
     return this.label;
   }
 
-  public setDescription(description: string): void {
-    this.description = description;
-  }
+  /* Description */
 
   public getDescription(): string {
     return this.description;
   }
 
-  public setIsRequired(): void {
-    this.isRequired = true;
-  }
+  /* Required */
 
   public getIsRequired(): boolean {
     return this.isRequired;
   }
 
-  public setIsVirtual() {
-    if (this.isRequired) {
-      throw Error("Cannot hide a required field from mapping.");
+  /* Choices Fn */
+
+  public getChoices(): Record<string, unknown> {
+    return this.choices;
+  }
+
+  private async _runChoicesAsync(): Promise<void> {
+    if (G.isNotNil(this.choicesFnAsync)) {
+      const choices = await this.choicesFnAsync(this._env);
+      this.choices = choices;
     }
-
-    this.isVirtual = true;
-    this.isReadOnly = true;
-  }
-
-  public getIsVirtual(): boolean {
-    return this.isVirtual;
-  }
-
-  public setIsReadOnly(): void {
-    this.isReadOnly = true;
-  }
-
-  public getIsReadOnly(): boolean {
-    return this.isReadOnly;
-  }
-
-  public setIsUnique(): void {
-    this.isUnique = true;
-  }
-
-  public getIsUnique(): boolean {
-    return this.isUnique;
-  }
-
-  public setChoices(choices: Record<string, unknown>): void {
-    this.value = choices;
-  }
-
-  public async setChoicesAsync(
-    handler: (env: Env) => Promise<Record<string, unknown>>,
-  ): Promise<void> {
-    const choices = await handler(this.env);
-    this.value = choices;
-  }
-
-  public getValue(): Record<string, unknown> {
-    return this.value;
-  }
-
-  public getMessages(): Array<Message> {
-    return this.messages;
-  }
-}
-
-export class OptionFieldBuilder implements Builder {
-  private optionField: OptionField;
-
-  constructor() {
-    this.optionField = new OptionField();
   }
 
   /**
-   * Sets the value in the UI table the user will see.
-   *
-   * @param {string} label - column header
-   * @returns this
+   * Runs all sync and async operations.
    */
-  withLabel(label: string): this {
-    this.optionField.setLabel(label);
+  public run(): void {
+    this._runChoicesAsync();
+  }
 
-    return this;
+  /* Value */
+
+  public getValue(): Nullable<string> {
+    return this._value;
+  }
+
+  public setValue(value: string): void {
+    this._value = value;
+  }
+
+  /* Messages */
+
+  public getMessages(): Array<Message> {
+    return this._messages;
+  }
+
+  private _addMessage(message: Message): void {
+    this._messages = this._messages.concat(message);
+  }
+
+  /* Env */
+
+  public getEnv(): Env {
+    return this._env;
+  }
+
+  public setEnv(env: Env): void {
+    this._env = env;
+  }
+}
+
+/**
+ * Builder class for a OptionField.
+ *
+ * @example
+ * const state = new OptionFieldBuilder("State")
+ *   .withChoices({
+ *     colorado: "Colorado",
+ *   })
+ *   .build();
+ */
+export class OptionFieldBuilder implements Builder<OptionField> {
+  private readonly label: string;
+  private description?: string;
+  private isRequired?: boolean;
+  private choices?: Record<string, unknown>;
+  private choicesFnAsync?: (env: Env) => Promise<Record<string, unknown>>;
+
+  constructor(label: string) {
+    this.label = label;
   }
 
   /**
@@ -127,7 +139,7 @@ export class OptionFieldBuilder implements Builder {
    * @returns this
    */
   withDescription(description: string): this {
-    this.optionField.setDescription(description);
+    this.description = description;
 
     return this;
   }
@@ -138,40 +150,7 @@ export class OptionFieldBuilder implements Builder {
    * @returns this
    */
   withRequired(): this {
-    this.optionField.setIsRequired();
-
-    return this;
-  }
-
-  /**
-   * Specifies the field is only visible during the review stage and makes it inherently a read-only field.
-   *
-   * @returns this
-   */
-  withVirtual(): this {
-    this.optionField.setIsVirtual();
-
-    return this;
-  }
-
-  /**
-   * Ensures a user cannot edit the value.
-   *
-   * @returns this
-   */
-  withReadOnly(): this {
-    this.optionField.setIsReadOnly();
-
-    return this;
-  }
-
-  /**
-   * Ensures a value is unique in the entire column.
-   *
-   * @returns this
-   */
-  withUnique(): this {
-    this.optionField.setIsUnique();
+    this.isRequired = true;
 
     return this;
   }
@@ -183,7 +162,7 @@ export class OptionFieldBuilder implements Builder {
    * @returns this
    */
   withChoices(choices: Record<string, unknown>): this {
-    this.optionField.setChoices(choices);
+    this.choices = choices;
 
     return this;
   }
@@ -198,8 +177,23 @@ export class OptionFieldBuilder implements Builder {
   withChoicesAsync(
     handler: (env: Env) => Promise<Record<string, unknown>>,
   ): this {
-    this.optionField.setChoicesAsync(handler);
+    this.choicesFnAsync = handler;
 
     return this;
+  }
+
+  /**
+   * Final call to return an instantiated TextField.
+   *
+   * @returns TextField
+   */
+  build(): OptionField {
+    return new OptionField({
+      label: this.label,
+      description: this.description,
+      isRequired: this.isRequired,
+      choices: this.choices,
+      choicesFnAsync: this.choicesFnAsync,
+    });
   }
 }

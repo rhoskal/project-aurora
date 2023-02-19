@@ -1,49 +1,76 @@
-import { SheetBuilder as Sheet } from "../sheet/sheet";
+import { Sheet } from "../sheet/sheet";
+import * as G from "../helpers/typeGuards";
 
-class Workbook {
-  private readonly name: string;
-  private sheets: Array<Sheet>;
-  private env: Record<string, unknown>;
+type Env = Record<string, unknown>;
 
-  constructor(name: string) {
-    this.name = name;
-    this.sheets = [];
-    this.env = {};
+export class Workbook {
+  private readonly displayName: string;
+
+  private readonly _sheets: Array<Sheet>;
+  private readonly _env: Env;
+
+  constructor(params: {
+    displayName: string;
+    sheets: Array<Sheet>;
+    env?: Env;
+  }) {
+    // params
+    this.displayName = params.displayName;
+
+    // internal
+    this._sheets = params.sheets;
+    this._env = G.isUndefined(params.env) ? {} : params.env;
   }
 
-  public getName(): string {
-    return this.name;
+  public getDisplayName(): string {
+    return this.displayName;
   }
 
-  public getEnv(): Record<string, unknown> {
-    return this.env;
+  public getEnv(): Env {
+    return this._env;
   }
 
-  public addSheet(sheet: Sheet): void {
-    this.sheets.concat(sheet);
-  }
-
-  public setEnv(env: Record<string, unknown>): void {
-    this.env = env;
+  public getSheets(): Array<Sheet> {
+    return this._sheets;
   }
 }
 
 export class WorkbookBuilder {
-  private workbook: Workbook;
+  private displayName: string;
+  private sheets: Array<Sheet>;
+  private env?: Env;
 
-  constructor(name: string) {
-    this.workbook = new Workbook(name);
+  constructor(displayName: string) {
+    this.displayName = displayName;
+    this.sheets = [];
   }
 
   withSheet(sheet: Sheet): this {
-    this.workbook.addSheet(sheet);
+    this.sheets = this.sheets.concat(sheet);
 
     return this;
   }
 
-  withEnv(env: Record<string, unknown>): this {
-    this.workbook.setEnv(env);
+  withEnv(env: Env): this {
+    this.env = env;
 
     return this;
+  }
+
+  /**
+   * Final call to return an instantiated Workbook.
+   *
+   * @returns Workbook
+   */
+  build(): Workbook {
+    if (this.sheets.length === 0) {
+      throw new Error("A Workbook must include at least 1 Sheet.");
+    }
+
+    return new Workbook({
+      displayName: this.displayName,
+      sheets: this.sheets,
+      env: this.env,
+    });
   }
 }
