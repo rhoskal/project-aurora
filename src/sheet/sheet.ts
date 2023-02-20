@@ -63,7 +63,7 @@ export class Sheet<T = never> {
     pipe(
       this.computeFn,
       O.match(constVoid, (computeFn) => {
-        const newValue = computeFn({
+        const newRecords = computeFn({
           records: this._records,
           env: {},
           logger: this._logger,
@@ -136,11 +136,11 @@ export class SheetBuilder<T = never> {
   }
 
   /**
-   * Final call to return an instantiated TextField.
+   * Final call to return an instantiated Sheet.
    *
-   * @returns TextField
+   * @returns Sheet
    */
-  build(): Sheet {
+  build(): never | Sheet {
     if (this.fields.size === 0) {
       throw new Error("A Sheet must include at least one field.");
     }

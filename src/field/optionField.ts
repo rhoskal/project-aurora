@@ -203,7 +203,7 @@ export class OptionFieldBuilder implements Builder<OptionField> {
    *
    * @returns OptionField
    */
-  build(): OptionField {
+  build(): never | OptionField {
     if (G.isUndefined(this.choices) && G.isUndefined(this.choicesFnAsync)) {
       throw Error(
         "Either `withChoices()` or `withChoicesAsync()` must be present.",

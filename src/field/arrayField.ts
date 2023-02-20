@@ -331,9 +331,9 @@ export class ArrayFieldBuilder<T> implements Builder<ArrayField<T>> {
   }
 
   /**
-   * Final call to return an instantiated TextField.
+   * Final call to return an instantiated ArrayField.
    *
-   * @returns TextField
+   * @returns ArrayField
    */
   build(): ArrayField<T> {
     return new ArrayField<T>({

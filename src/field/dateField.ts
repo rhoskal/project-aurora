@@ -381,7 +381,7 @@ export class DateFieldBuilder implements Builder<DateField> {
   }
 
   /**
-   * Final call to return an instantiated TextField.
+   * Final call to return an instantiated DateField.
    *
    * @returns DateField
    */

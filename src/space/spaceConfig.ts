@@ -82,7 +82,7 @@ export class SpaceConfigBuilder {
    *
    * @returns SpaceConfig
    */
-  build(): SpaceConfig {
+  build(): never | SpaceConfig {
     if (this.workooks.length === 0) {
       throw new Error("A Space Config must include at least 1 Workbook.");
     }

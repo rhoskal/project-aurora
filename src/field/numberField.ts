@@ -326,9 +326,9 @@ export class NumberFieldBuilder implements Builder<NumberField> {
   }
 
   /**
-   * Final call to return an instantiated TextField.
+   * Final call to return an instantiated NumberField.
    *
-   * @returns TextField
+   * @returns NumberField
    */
   build(): NumberField {
     return new NumberField({

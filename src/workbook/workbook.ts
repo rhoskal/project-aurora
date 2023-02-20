@@ -67,7 +67,7 @@ export class WorkbookBuilder {
    *
    * @returns Workbook
    */
-  build(): Workbook {
+  build(): never | Workbook {
     if (this.sheets.length === 0) {
       throw new Error("A Workbook must include at least 1 Sheet.");
     }
