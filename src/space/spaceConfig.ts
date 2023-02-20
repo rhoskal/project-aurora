@@ -1,6 +1,12 @@
+import * as Eq from "fp-ts/Eq";
 import * as O from "fp-ts/Option";
+import * as RA from "fp-ts/ReadonlyArray";
 import { pipe } from "fp-ts/function";
 import { Workbook } from "../workbook/workbook";
+
+const eqWorkbook: Eq.Eq<Workbook> = {
+  equals: (wb1, wb2) => wb1.getDisplayName() === wb2.getDisplayName(),
+};
 
 export class SpaceConfig {
   private readonly name: string;
@@ -72,7 +78,11 @@ export class SpaceConfigBuilder {
    * @returns this
    */
   public withWorkbook(workbook: Workbook): this {
-    this.workooks = this.workooks.concat(workbook);
+    this.workooks = pipe(
+      this.workooks,
+      RA.append(workbook),
+      RA.uniq(eqWorkbook),
+    );
 
     return this;
   }

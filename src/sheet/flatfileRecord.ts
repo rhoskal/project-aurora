@@ -1,10 +1,18 @@
+import * as Eq from "fp-ts/Eq";
 import * as RA from "fp-ts/ReadonlyArray";
+import { pipe } from "fp-ts/function";
 
 import { Message } from "../field/message";
 import * as G from "../helpers/typeGuards";
 
 type Key<O> = keyof O;
 type Value<O> = O[keyof O];
+
+const eqMessage: Eq.Eq<Message> = {
+  equals: (m1, m2) =>
+    m1.getSeverity() === m2.getSeverity() &&
+    m1.getContent() === m2.getContent(),
+};
 
 export class FFRecord<O extends object = {}> {
   private _value: O;
@@ -24,7 +32,11 @@ export class FFRecord<O extends object = {}> {
   }
 
   public addMessage(key: Key<O>, message: Message): void {
-    this._messages = RA.append(message)(this._messages);
+    this._messages = pipe(
+      this._messages,
+      RA.append(message),
+      RA.uniq(eqMessage),
+    );
   }
 
   public getMessages(): ReadonlyArray<Message> {
