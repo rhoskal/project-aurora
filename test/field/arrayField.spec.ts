@@ -2,7 +2,7 @@ import { ArrayFieldBuilder } from "../../src/field/arrayField";
 import { Message } from "../../src/field/message";
 import * as G from "../../src/helpers/typeGuards";
 
-describe("arrayField", () => {
+describe("ArrayField", () => {
   it("should handle simple creation", () => {
     const arrayField = new ArrayFieldBuilder("Foo").build();
 

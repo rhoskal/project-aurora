@@ -1,6 +1,7 @@
 import * as O from "fp-ts/Option";
 import * as RA from "fp-ts/ReadonlyArray";
 import { pipe, constVoid } from "fp-ts/function";
+
 import * as G from "../helpers/typeGuards";
 import { Builder } from "./builder";
 import { Message } from "./message";
@@ -80,9 +81,7 @@ export class OptionField {
       O.match(constVoid, async (choicesFnAsync) => {
         const choices = await choicesFnAsync(this._env);
 
-        if (choices) {
-          this._choices = choices;
-        }
+        this._choices = choices;
       }),
     );
   }
@@ -208,6 +207,12 @@ export class OptionFieldBuilder implements Builder<OptionField> {
     if (G.isUndefined(this.choices) && G.isUndefined(this.choicesFnAsync)) {
       throw Error(
         "Either `withChoices()` or `withChoicesAsync()` must be present.",
+      );
+    }
+
+    if (G.isNotNil(this.choices) && G.isNotNil(this.choicesFnAsync)) {
+      throw Error(
+        "Please choose either `withChoices()` or `withChoicesAsync()` since both are present.",
       );
     }
 

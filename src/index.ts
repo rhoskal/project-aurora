@@ -9,7 +9,7 @@ import { SheetBuilder } from "./sheet/sheet";
 import { TextFieldBuilder } from "./field/textField";
 import { WorkbookBuilder } from "./workbook/workbook";
 // import { FlatfileRecordBuilder as FlatfileRecord } from "./sheet/flatfileRecord";
-import { SpaceConfigBuilder as SpaceConfig } from "./space/spaceConfig";
+import { SpaceConfigBuilder } from "./space/spaceConfig";
 import * as G from "./helpers/typeGuards";
 
 const firstName = new TextFieldBuilder("First Name")
@@ -161,6 +161,7 @@ const workbook = new WorkbookBuilder("Fundraiser Contacts")
 // const x = record3.get("emails");
 // record3.addError("emails", "a");
 
-export default new SpaceConfig("Test")
+export default new SpaceConfigBuilder("Test")
   .withSlug("some-slug")
-  .withWorkbook(workbook);
+  .withWorkbook(workbook)
+  .build();

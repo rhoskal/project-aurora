@@ -1,14 +1,8 @@
-import axios from "axios";
-
 import { TextFieldBuilder } from "../../src/field/textField";
 import { Message } from "../../src/field/message";
 import * as G from "../../src/helpers/typeGuards";
 
 type Nullable<T> = null | T;
-
-jest.mock("axios", () =>
-  jest.fn(() => Promise.resolve({ data: { exists: true } })),
-);
 
 describe("TextField", () => {
   it("should handle simple creation", () => {
@@ -107,41 +101,15 @@ describe("TextField", () => {
     expect(textField.getMessages()).toHaveLength(1);
   });
 
-  //   it.only("should handle an async validate fn", () => {
+  //   it("should handle an async validate fn", () => {
   //     const textField = new TextFieldBuilder("Email Async")
   //       .withRequired()
   //       .withUnique()
-  //       .withValidateAsync((value, env) => {
-  //         if (G.isNotNil(value)) {
-  //           // return (
-  //           // axios
-  //           //   .get(
-  //           //     `https://foobar.com/doesEmailExist?email=${value
-  //           //       .trim()
-  //           //       .toLowerCase()}`,
-  //           //     {},
-  //           //   )
-  //           return axios({
-  //             method: "GET",
-  //             url: "https://foobar.com/doesEmailExist",
-  //             headers: {},
-  //             params: {
-  //               email: value.trim().toLowerCase(),
-  //             },
-  //           })
-  //             .then(({ data }: { data: { exists: boolean } }) => {
-  //               console.log("data:", JSON.stringify(data, null, 2));
-  //               if (data.exists) {
-  //                 console.log("it exists");
-  //                 return new Message(
-  //                   "error",
-  //                   `Email: '${value}' already exists.`,
-  //                 );
-  //               }
-  //             })
-  //             .catch((_e) => {});
-  //         }
-  //       })
+  //       .withValidateAsync((value, _env) =>
+  //         Promise.resolve(
+  //           new Message("error", `Email: '${value}' already exists.`),
+  //         ),
+  //       )
   //       .build();
   //
   //     expect(textField.getLabel()).toBe("Email Async");
@@ -154,7 +122,6 @@ describe("TextField", () => {
   //     expect(textField.getMessages()).toHaveLength(0);
   //
   //     textField.run();
-  //     expect(axios).toHaveBeenCalled();
   //     expect(textField.getMessages()).toHaveLength(1);
   //   });
 });

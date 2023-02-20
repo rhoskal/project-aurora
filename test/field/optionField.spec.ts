@@ -41,8 +41,8 @@ describe("OptionField", () => {
     };
 
     const optionField = new OptionFieldBuilder("Foo")
-      .withChoices(choices)
       .withRequired()
+      .withChoices(choices)
       .build();
 
     const actual: boolean = optionField.getIsRequired();
@@ -70,13 +70,48 @@ describe("OptionField", () => {
     expect(actual).toBe(expected);
   });
 
-  it("should handle setting choices asynchronously", () => {});
+  //   it("should handle setting choices asynchronously", () => {
+  //     const choices: Record<"colorado", string> = {
+  //       colorado: "Colorado",
+  //     };
+  //
+  //     const optionField = new OptionFieldBuilder("State")
+  //       .withChoicesAsync((_env) => Promise.resolve(choices))
+  //       .build();
+  //
+  //     optionField.run();
+  //     expect(optionField.getChoices()).toStrictEqual(choices);
+  //
+  //     optionField.setValue("colorado");
+  //
+  //     const actual: Nullable<string> = optionField.getValue();
+  //     const expected: string = "colorado";
+  //
+  //     expect(actual).toBe(expected);
+  //   });
 
-  it("should handle creation with choices set", () => {
+  it("should handle creation attempt with no choices set", () => {
     expect(() => {
       new OptionFieldBuilder("Foo").build();
     }).toThrowError(
       Error("Either `withChoices()` or `withChoicesAsync()` must be present."),
+    );
+  });
+
+  it("should handle creation attempt with both choices set", () => {
+    expect(() => {
+      const choices: Record<"colorado", string> = {
+        colorado: "Colorado",
+      };
+
+      new OptionFieldBuilder("State")
+        .withChoices(choices)
+        .withChoicesAsync((_env) => Promise.resolve(choices))
+        .build();
+    }).toThrowError(
+      Error(
+        "Please choose either `withChoices()` or `withChoicesAsync()` since both are present.",
+      ),
     );
   });
 });

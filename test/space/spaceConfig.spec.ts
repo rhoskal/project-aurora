@@ -3,7 +3,7 @@ import { SheetBuilder } from "../../src/sheet/sheet";
 import { WorkbookBuilder } from "../../src/workbook/workbook";
 import { SpaceConfigBuilder } from "../../src/space/spaceConfig";
 
-describe("Sheet", () => {
+describe("SpaceConfig", () => {
   it("should handle simple creation", () => {
     const textField = new TextFieldBuilder("Foo").build();
     const sheet = new SheetBuilder("Bar").withField("foo", textField).build();
