@@ -1,5 +1,8 @@
-import { Builder } from "./builder";
+import * as O from "fp-ts/Option";
+import * as RA from "fp-ts/ReadonlyArray";
+import { pipe, constVoid } from "fp-ts/function";
 import * as G from "../helpers/typeGuards";
+import { Builder } from "./builder";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
@@ -9,13 +12,13 @@ export class OptionField {
   private readonly label: string;
   private readonly description: string;
   private readonly isRequired: boolean;
-  private choices: Record<string, unknown>;
-  private readonly choicesFnAsync?: (
-    env: Env,
-  ) => Promise<Record<string, unknown>>;
+  private readonly choicesFnAsync: O.Option<
+    (env: Env) => Promise<Record<string, unknown>>
+  >;
 
-  private _value: Nullable<string>;
-  private _messages: Array<Message>;
+  private _value: O.Option<string>;
+  private _choices: Record<string, unknown>;
+  private _messages: ReadonlyArray<Message>;
   private _env: Env;
 
   constructor(params: {
@@ -27,17 +30,22 @@ export class OptionField {
   }) {
     // params
     this.label = params.label;
-    this.description = G.isUndefined(params.description)
-      ? ""
-      : params.description;
-    this.isRequired = G.isUndefined(params.isRequired)
-      ? false
-      : params.isRequired;
-    this.choices = G.isUndefined(params.choices) ? {} : params.choices;
-    this.choicesFnAsync = params.choicesFnAsync;
+    this.description = pipe(
+      O.fromNullable(params.description),
+      O.getOrElse(() => ""),
+    );
+    this.isRequired = pipe(
+      O.fromNullable(params.isRequired),
+      O.getOrElse(() => false),
+    );
+    this.choicesFnAsync = O.fromNullable(params.choicesFnAsync);
 
     // internal
-    this._value = null;
+    this._value = O.none;
+    this._choices = pipe(
+      O.fromNullable(params.choices),
+      O.getOrElse(() => ({})),
+    );
     this._messages = [];
     this._env = {};
   }
@@ -63,14 +71,20 @@ export class OptionField {
   /* Choices Fn */
 
   public getChoices(): Record<string, unknown> {
-    return this.choices;
+    return this._choices;
   }
 
   private async _runChoicesAsync(): Promise<void> {
-    if (G.isNotNil(this.choicesFnAsync)) {
-      const choices = await this.choicesFnAsync(this._env);
-      this.choices = choices;
-    }
+    pipe(
+      this.choicesFnAsync,
+      O.match(constVoid, async (choicesFnAsync) => {
+        const choices = await choicesFnAsync(this._env);
+
+        if (choices) {
+          this._choices = choices;
+        }
+      }),
+    );
   }
 
   /**
@@ -83,21 +97,24 @@ export class OptionField {
   /* Value */
 
   public getValue(): Nullable<string> {
-    return this._value;
+    return pipe(
+      this._value,
+      O.getOrElseW(() => null),
+    );
   }
 
   public setValue(value: string): void {
-    this._value = value;
+    this._value = O.some(value);
   }
 
   /* Messages */
 
-  public getMessages(): Array<Message> {
+  public getMessages(): ReadonlyArray<Message> {
     return this._messages;
   }
 
   private _addMessage(message: Message): void {
-    this._messages = this._messages.concat(message);
+    this._messages = RA.append(message)(this._messages);
   }
 
   /* Env */
@@ -183,11 +200,17 @@ export class OptionFieldBuilder implements Builder<OptionField> {
   }
 
   /**
-   * Final call to return an instantiated TextField.
+   * Final call to return an instantiated OptionField.
    *
-   * @returns TextField
+   * @returns OptionField
    */
   build(): OptionField {
+    if (G.isUndefined(this.choices) && G.isUndefined(this.choicesFnAsync)) {
+      throw Error(
+        "Either `withChoices()` or `withChoicesAsync()` must be present.",
+      );
+    }
+
     return new OptionField({
       label: this.label,
       description: this.description,

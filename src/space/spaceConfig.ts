@@ -1,21 +1,27 @@
+import * as O from "fp-ts/Option";
+import { pipe } from "fp-ts/function";
 import { Workbook } from "../workbook/workbook";
-import * as G from "../helpers/typeGuards";
 
 export class SpaceConfig {
   private readonly name: string;
-  private slug: string;
-  private workbooks: Array<Workbook>;
+
+  private _slug: string;
+  private _workbooks: ReadonlyArray<Workbook>;
 
   constructor(params: {
     name: string;
     slug?: string;
-    workbooks: Array<Workbook>;
+    workbooks: ReadonlyArray<Workbook>;
   }) {
+    // params
     this.name = params.name;
-    this.slug = G.isUndefined(params.slug)
-      ? "some_generated_slug"
-      : params.slug;
-    this.workbooks = params.workbooks;
+
+    // internal
+    this._slug = pipe(
+      O.fromNullable(params.slug),
+      O.getOrElse(() => "some_generated_slug"),
+    );
+    this._workbooks = params.workbooks;
   }
 
   /* Name */
@@ -27,20 +33,20 @@ export class SpaceConfig {
   /* Slug */
 
   public getSlug(): string {
-    return this.slug;
+    return this._slug;
   }
 
   /* Workbooks */
 
-  public getWorkbooks(): Array<Workbook> {
-    return this.workbooks;
+  public getWorkbooks(): ReadonlyArray<Workbook> {
+    return this._workbooks;
   }
 }
 
 export class SpaceConfigBuilder {
   private readonly name: string;
   private slug?: string;
-  private workooks: Array<Workbook>;
+  private workooks: ReadonlyArray<Workbook>;
 
   constructor(name: string) {
     this.name = name;

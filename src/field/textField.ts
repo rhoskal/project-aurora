@@ -1,5 +1,8 @@
+import * as O from "fp-ts/Option";
+import * as RA from "fp-ts/ReadonlyArray";
+import { pipe, constVoid } from "fp-ts/function";
+
 import { Builder } from "./builder";
-import * as G from "../helpers/typeGuards";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
@@ -11,16 +14,17 @@ export class TextField {
   private readonly isRequired: boolean;
   private readonly isReadOnly: boolean;
   private readonly isUnique: boolean;
-  private readonly defaultValue: Nullable<string>;
-  private readonly computeFn?: (value: Nullable<string>) => string;
-  private readonly validateFn?: (value: Nullable<string>) => void | Message;
-  private readonly validateFnAsync?: (
-    value: Nullable<string>,
-    env: Env,
-  ) => Promise<void | Message>;
+  private readonly defaultValue: O.Option<string>;
+  private readonly computeFn: O.Option<(value: Nullable<string>) => string>;
+  private readonly validateFn: O.Option<
+    (value: Nullable<string>) => void | Message
+  >;
+  private readonly validateFnAsync: O.Option<
+    (value: Nullable<string>, env: Env) => Promise<void | Message>
+  >;
 
-  private _value: Nullable<string>;
-  private _messages: Array<Message>;
+  private _value: O.Option<string>;
+  private _messages: ReadonlyArray<Message>;
   private _env: Env;
 
   constructor(params: {
@@ -39,25 +43,29 @@ export class TextField {
   }) {
     // params
     this.label = params.label;
-    this.description = G.isUndefined(params.description)
-      ? ""
-      : params.description;
-    this.isRequired = G.isUndefined(params.isRequired)
-      ? false
-      : params.isRequired;
-    this.isReadOnly = G.isUndefined(params.isReadOnly)
-      ? false
-      : params.isReadOnly;
-    this.isUnique = G.isUndefined(params.isUnique) ? false : params.isUnique;
-    this.defaultValue = G.isUndefined(params.defaultValue)
-      ? null
-      : params.defaultValue;
-    this.computeFn = params.computeFn;
-    this.validateFn = params.validateFn;
-    this.validateFnAsync = params.validateFnAsync;
+    this.description = pipe(
+      O.fromNullable(params.description),
+      O.getOrElse(() => ""),
+    );
+    this.isRequired = pipe(
+      O.fromNullable(params.isRequired),
+      O.getOrElse(() => false),
+    );
+    this.isReadOnly = pipe(
+      O.fromNullable(params.isReadOnly),
+      O.getOrElse(() => false),
+    );
+    this.isUnique = pipe(
+      O.fromNullable(params.isUnique),
+      O.getOrElse(() => false),
+    );
+    this.defaultValue = O.fromNullable(params.defaultValue);
+    this.computeFn = O.fromNullable(params.computeFn);
+    this.validateFn = O.fromNullable(params.validateFn);
+    this.validateFnAsync = O.fromNullable(params.validateFnAsync);
 
     // internal
-    this._value = null;
+    this._value = O.none;
     this._messages = [];
     this._env = {};
   }
@@ -95,32 +103,56 @@ export class TextField {
   /* Compute Fn */
 
   private _runComputeFn(): void {
-    if (G.isNotNil(this.computeFn)) {
-      const newValue = this.computeFn(this._value);
-      this.setValue(newValue);
-    }
+    pipe(
+      this.computeFn,
+      O.match(constVoid, (computeFn) => {
+        pipe(
+          this._value,
+          O.match(constVoid, (currentValue) => {
+            const newValue = computeFn(currentValue);
+            this.setValue(newValue);
+          }),
+        );
+      }),
+    );
   }
 
   /* Validate Fn */
 
   private _runValidateFn(): void {
-    if (G.isNotNil(this.validateFn)) {
-      const message = this.validateFn(this._value);
+    pipe(
+      this.validateFn,
+      O.match(constVoid, (validateFn) => {
+        pipe(
+          this._value,
+          O.match(constVoid, (currentValue) => {
+            const message = validateFn(currentValue);
 
-      if (message) {
-        this._addMessage(message);
-      }
-    }
+            if (message) {
+              this._addMessage(message);
+            }
+          }),
+        );
+      }),
+    );
   }
 
   private async _runValidateAsync(): Promise<void> {
-    if (G.isNotNil(this.validateFnAsync)) {
-      const message = await this.validateFnAsync(this._value, this._env);
+    pipe(
+      this.validateFnAsync,
+      O.match(constVoid, (validateFnAsync) => {
+        pipe(
+          this._value,
+          O.match(constVoid, async (currentValue) => {
+            const message = await validateFnAsync(currentValue, this._env);
 
-      if (message) {
-        this._addMessage(message);
-      }
-    }
+            if (message) {
+              this._addMessage(message);
+            }
+          }),
+        );
+      }),
+    );
   }
 
   /**
@@ -135,25 +167,29 @@ export class TextField {
   /* Value */
 
   public getValue(): Nullable<string> {
-    if (G.isNull(this._value) && G.isNotNil(this.defaultValue)) {
-      return this.defaultValue;
-    } else {
-      return this._value;
-    }
+    return pipe(
+      this._value,
+      O.getOrElse(() => {
+        return pipe(
+          this.defaultValue,
+          O.getOrElseW(() => null),
+        );
+      }),
+    );
   }
 
   public setValue(value: string): void {
-    this._value = value;
+    this._value = O.some(value);
   }
 
   /* Messages */
 
-  public getMessages(): Array<Message> {
+  public getMessages(): ReadonlyArray<Message> {
     return this._messages;
   }
 
   private _addMessage(message: Message): void {
-    this._messages = this._messages.concat(message);
+    this._messages = RA.append(message)(this._messages);
   }
 
   /* Env */

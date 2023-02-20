@@ -2,6 +2,8 @@ import { DateFieldBuilder } from "../../src/field/dateField";
 import { Message } from "../../src/field/message";
 import * as G from "../../src/helpers/typeGuards";
 
+type Nullable<T> = null | T;
+
 const getTomorrow = (): Date => {
   const now: Date = new Date();
   const temp: Date = new Date(now);
@@ -19,8 +21,8 @@ describe("DateField", () => {
     expect(textField.getIsRequired()).toBe(false);
     expect(textField.getIsReadOnly()).toBe(false);
     expect(textField.getIsUnique()).toBe(false);
-    expect(textField.getDisplayFormat()).toBe("");
-    expect(textField.getEgressFormat()).toBe("");
+    expect(textField.getDisplayFormat()).toBe(null);
+    expect(textField.getEgressFormat()).toBe(null);
     expect(textField.getValue()).toBe(null);
     expect(textField.getMessages()).toStrictEqual([]);
   });
@@ -68,7 +70,7 @@ describe("DateField", () => {
       .withDisplayFormat("MM-dd-YYYY")
       .build();
 
-    const actual: string = dateField.getDisplayFormat();
+    const actual: Nullable<string> = dateField.getDisplayFormat();
     const expected: string = "MM-dd-YYYY";
 
     expect(actual).toBe(expected);
@@ -79,7 +81,7 @@ describe("DateField", () => {
       .withEgressFormat("MM-dd-YYYY")
       .build();
 
-    const actual: string = dateField.getEgressFormat();
+    const actual: Nullable<string> = dateField.getEgressFormat();
     const expected: string = "MM-dd-YYYY";
 
     expect(actual).toBe(expected);

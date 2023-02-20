@@ -1,5 +1,8 @@
+import * as O from "fp-ts/Option";
+import * as RA from "fp-ts/ReadonlyArray";
+import { pipe, constVoid } from "fp-ts/function";
+
 import { Builder } from "./builder";
-import * as G from "../helpers/typeGuards";
 import { Message } from "./message";
 
 type Env = Record<string, unknown>;
@@ -10,16 +13,19 @@ export class ArrayField<T> {
   private readonly isRequired: boolean;
   private readonly isReadOnly: boolean;
   private readonly isUnique: boolean;
-  private readonly defaultValue: Array<T>;
-  private readonly computeFn?: (value: Array<T>) => Array<T>;
-  private readonly validateFn?: (value: Array<T>) => void | Message;
-  private readonly validateFnAsync?: (
-    value: Array<T>,
-    env: Env,
-  ) => Promise<void | Message>;
+  private readonly defaultValue: O.Option<ReadonlyArray<T>>;
+  private readonly computeFn: O.Option<
+    (value: ReadonlyArray<T>) => ReadonlyArray<T>
+  >;
+  private readonly validateFn: O.Option<
+    (value: ReadonlyArray<T>) => void | Message
+  >;
+  private readonly validateFnAsync: O.Option<
+    (value: ReadonlyArray<T>, env: Env) => Promise<void | Message>
+  >;
 
-  private _value: Array<T>;
-  private _messages: Array<Message>;
+  private _value: O.Option<ReadonlyArray<T>>;
+  private _messages: ReadonlyArray<Message>;
   private _env: Env;
 
   constructor(params: {
@@ -28,32 +34,40 @@ export class ArrayField<T> {
     isRequired?: boolean;
     isReadOnly?: boolean;
     isUnique?: boolean;
-    defaultValue?: Array<T>;
-    computeFn?: (value: Array<T>) => Array<T>;
-    validateFn?: (value: Array<T>) => void | Message;
-    validateFnAsync?: (value: Array<T>, env: Env) => Promise<void | Message>;
+    defaultValue?: ReadonlyArray<T>;
+    computeFn?: (value: ReadonlyArray<T>) => ReadonlyArray<T>;
+    validateFn?: (value: ReadonlyArray<T>) => void | Message;
+    validateFnAsync?: (
+      value: ReadonlyArray<T>,
+      env: Env,
+    ) => Promise<void | Message>;
   }) {
     // params
     this.label = params.label;
-    this.description = G.isUndefined(params.description)
-      ? ""
-      : params.description;
-    this.isRequired = G.isUndefined(params.isRequired)
-      ? false
-      : params.isRequired;
-    this.isReadOnly = G.isUndefined(params.isReadOnly)
-      ? false
-      : params.isReadOnly;
-    this.isUnique = G.isUndefined(params.isUnique) ? false : params.isUnique;
-    this.defaultValue = G.isUndefined(params.defaultValue)
-      ? []
-      : params.defaultValue;
-    this.computeFn = params.computeFn;
-    this.validateFn = params.validateFn;
-    this.validateFnAsync = params.validateFnAsync;
+    this.label = params.label;
+    this.description = pipe(
+      O.fromNullable(params.description),
+      O.getOrElse(() => ""),
+    );
+    this.isRequired = pipe(
+      O.fromNullable(params.isRequired),
+      O.getOrElse(() => false),
+    );
+    this.isReadOnly = pipe(
+      O.fromNullable(params.isReadOnly),
+      O.getOrElse(() => false),
+    );
+    this.isUnique = pipe(
+      O.fromNullable(params.isUnique),
+      O.getOrElse(() => false),
+    );
+    this.defaultValue = O.fromNullable(params.defaultValue);
+    this.computeFn = O.fromNullable(params.computeFn);
+    this.validateFn = O.fromNullable(params.validateFn);
+    this.validateFnAsync = O.fromNullable(params.validateFnAsync);
 
     // internal
-    this._value = [];
+    this._value = O.none;
     this._messages = [];
     this._env = {};
   }
@@ -91,32 +105,56 @@ export class ArrayField<T> {
   /* Compute Fn */
 
   private _runComputeFn(): void {
-    if (G.isNotNil(this.computeFn)) {
-      const newValue = this.computeFn(this._value);
-      this.setValue(newValue);
-    }
+    pipe(
+      this.computeFn,
+      O.match(constVoid, (computeFn) => {
+        pipe(
+          this._value,
+          O.match(constVoid, (currentValue) => {
+            const newValue = computeFn(currentValue);
+            this.setValue(newValue);
+          }),
+        );
+      }),
+    );
   }
 
   /* Validate Fn */
 
   private _runValidateFn(): void {
-    if (G.isNotNil(this.validateFn)) {
-      const message = this.validateFn(this._value);
+    pipe(
+      this.validateFn,
+      O.match(constVoid, (validateFn) => {
+        pipe(
+          this._value,
+          O.match(constVoid, (currentValue) => {
+            const message = validateFn(currentValue);
 
-      if (message) {
-        this._addMessage(message);
-      }
-    }
+            if (message) {
+              this._addMessage(message);
+            }
+          }),
+        );
+      }),
+    );
   }
 
   private async _runValidateAsync(): Promise<void> {
-    if (G.isNotNil(this.validateFnAsync)) {
-      const message = await this.validateFnAsync(this._value, this._env);
+    pipe(
+      this.validateFnAsync,
+      O.match(constVoid, (validateFnAsync) => {
+        pipe(
+          this._value,
+          O.match(constVoid, async (currentValue) => {
+            const message = await validateFnAsync(currentValue, this._env);
 
-      if (message) {
-        this._addMessage(message);
-      }
-    }
+            if (message) {
+              this._addMessage(message);
+            }
+          }),
+        );
+      }),
+    );
   }
 
   /**
@@ -130,26 +168,30 @@ export class ArrayField<T> {
 
   /* Value */
 
-  public getValue(): Array<T> {
-    if (G.isNull(this._value) && G.isNotNil(this.defaultValue)) {
-      return this.defaultValue;
-    } else {
-      return this._value;
-    }
+  public getValue(): ReadonlyArray<T> {
+    return pipe(
+      this._value,
+      O.getOrElse(() => {
+        return pipe(
+          this.defaultValue,
+          O.getOrElseW(() => []),
+        );
+      }),
+    );
   }
 
-  public setValue(value: Array<T>): void {
-    this._value = value;
+  public setValue(value: ReadonlyArray<T>): void {
+    this._value = O.some(value);
   }
 
   /* Messages */
 
-  public getMessages(): Array<Message> {
+  public getMessages(): ReadonlyArray<Message> {
     return this._messages;
   }
 
   private _addMessage(message: Message): void {
-    this._messages = this._messages.concat(message);
+    this._messages = RA.append(message)(this._messages);
   }
 
   /* Env */
@@ -180,11 +222,11 @@ export class ArrayFieldBuilder<T> implements Builder<ArrayField<T>> {
   private isRequired?: boolean;
   private isReadOnly?: boolean;
   private isUnique?: boolean;
-  private defaultValue?: Array<T>;
-  private computeFn?: (value: Array<T>) => Array<T>;
-  private validateFn?: (value: Array<T>) => void | Message;
+  private defaultValue?: ReadonlyArray<T>;
+  private computeFn?: (value: ReadonlyArray<T>) => ReadonlyArray<T>;
+  private validateFn?: (value: ReadonlyArray<T>) => void | Message;
   private validateFnAsync?: (
-    value: Array<T>,
+    value: ReadonlyArray<T>,
     env: Env,
   ) => Promise<void | Message>;
 
@@ -243,7 +285,7 @@ export class ArrayFieldBuilder<T> implements Builder<ArrayField<T>> {
    * @param value
    * @returns this
    */
-  withDefault(value: Array<T>): this {
+  withDefault(value: ReadonlyArray<T>): this {
     this.defaultValue = value;
 
     return this;
@@ -255,7 +297,7 @@ export class ArrayFieldBuilder<T> implements Builder<ArrayField<T>> {
    * @callback handler
    * @returns this
    */
-  withCompute(handler: (value: Array<T>) => Array<T>): this {
+  withCompute(handler: (value: ReadonlyArray<T>) => ReadonlyArray<T>): this {
     this.computeFn = handler;
 
     return this;
@@ -267,7 +309,7 @@ export class ArrayFieldBuilder<T> implements Builder<ArrayField<T>> {
    * @callback handler
    * @returns this
    */
-  withValidate(handler: (value: Array<T>) => void | Message): this {
+  withValidate(handler: (value: ReadonlyArray<T>) => void | Message): this {
     this.validateFn = handler;
 
     return this;
@@ -281,7 +323,7 @@ export class ArrayFieldBuilder<T> implements Builder<ArrayField<T>> {
    * @returns this
    */
   withValidateAsync(
-    handler: (value: Array<T>, env: Env) => Promise<void | Message>,
+    handler: (value: ReadonlyArray<T>, env: Env) => Promise<void | Message>,
   ): this {
     this.validateFnAsync = handler;
 

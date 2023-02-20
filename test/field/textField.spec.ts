@@ -4,6 +4,8 @@ import { TextFieldBuilder } from "../../src/field/textField";
 import { Message } from "../../src/field/message";
 import * as G from "../../src/helpers/typeGuards";
 
+type Nullable<T> = null | T;
+
 jest.mock("axios", () =>
   jest.fn(() => Promise.resolve({ data: { exists: true } })),
 );
@@ -55,6 +57,15 @@ describe("TextField", () => {
 
     const actual: boolean = textField.getIsUnique();
     const expected: boolean = true;
+
+    expect(actual).toBe(expected);
+  });
+
+  it("should handle using a default value", () => {
+    const textField = new TextFieldBuilder("Foo").withDefault("bar").build();
+
+    const actual: Nullable<string> = textField.getValue();
+    const expected: string = "bar";
 
     expect(actual).toBe(expected);
   });

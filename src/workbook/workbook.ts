@@ -1,17 +1,19 @@
+import * as O from "fp-ts/Option";
+import * as RA from "fp-ts/ReadonlyArray";
+import { pipe } from "fp-ts/function";
 import { Sheet } from "../sheet/sheet";
-import * as G from "../helpers/typeGuards";
 
 type Env = Record<string, unknown>;
 
 export class Workbook {
   private readonly displayName: string;
 
-  private readonly _sheets: Array<Sheet>;
-  private readonly _env: Env;
+  private _sheets: ReadonlyArray<Sheet>;
+  private _env: Env;
 
   constructor(params: {
     displayName: string;
-    sheets: Array<Sheet>;
+    sheets: ReadonlyArray<Sheet>;
     env?: Env;
   }) {
     // params
@@ -19,7 +21,10 @@ export class Workbook {
 
     // internal
     this._sheets = params.sheets;
-    this._env = G.isUndefined(params.env) ? {} : params.env;
+    this._env = pipe(
+      O.fromNullable(params.env),
+      O.getOrElse(() => ({})),
+    );
   }
 
   public getDisplayName(): string {
@@ -30,14 +35,14 @@ export class Workbook {
     return this._env;
   }
 
-  public getSheets(): Array<Sheet> {
+  public getSheets(): ReadonlyArray<Sheet> {
     return this._sheets;
   }
 }
 
 export class WorkbookBuilder {
   private displayName: string;
-  private sheets: Array<Sheet>;
+  private sheets: ReadonlyArray<Sheet>;
   private env?: Env;
 
   constructor(displayName: string) {
@@ -46,7 +51,7 @@ export class WorkbookBuilder {
   }
 
   withSheet(sheet: Sheet): this {
-    this.sheets = this.sheets.concat(sheet);
+    this.sheets = RA.append(sheet)(this.sheets);
 
     return this;
   }

@@ -2,6 +2,8 @@ import { NumberFieldBuilder } from "../../src/field/numberField";
 import { Message } from "../../src/field/message";
 import * as G from "../../src/helpers/typeGuards";
 
+type Nullable<T> = null | T;
+
 describe("NumberField", () => {
   it("should handle simple creation", () => {
     const numberField = new NumberFieldBuilder("Foo").build();
@@ -49,6 +51,15 @@ describe("NumberField", () => {
 
     const actual: boolean = numberField.getIsUnique();
     const expected: boolean = true;
+
+    expect(actual).toBe(expected);
+  });
+
+  it("should handle using a default value", () => {
+    const numberField = new NumberFieldBuilder("Foo").withDefault(42).build();
+
+    const actual: Nullable<number> = numberField.getValue();
+    const expected: number = 42;
 
     expect(actual).toBe(expected);
   });

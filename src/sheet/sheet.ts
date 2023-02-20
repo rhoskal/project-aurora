@@ -1,9 +1,11 @@
+import * as O from "fp-ts/Option";
+import { pipe, constVoid } from "fp-ts/function";
+
 import { ArrayField } from "../field/arrayField";
 import { DateField } from "../field/dateField";
 import { NumberField } from "../field/numberField";
 import { OptionField } from "../field/optionField";
 import { TextField } from "../field/textField";
-import * as G from "../helpers/typeGuards";
 import { FlatfileRecord } from "./flatfileRecord";
 import { Logger } from "./logger";
 
@@ -19,20 +21,22 @@ interface Env {}
 export class Sheet<T = never> {
   private readonly displayName: string;
   private readonly fields: Map<string, Field<T extends infer F ? F : never>>;
-  private readonly computeFn?: (opts: {
-    records: Array<FlatfileRecord>;
-    env: Env;
-    logger: Logger;
-  }) => void;
+  private readonly computeFn: O.Option<
+    (opts: {
+      records: ReadonlyArray<FlatfileRecord>;
+      env: Env;
+      logger: Logger;
+    }) => void
+  >;
 
-  private _records: Array<FlatfileRecord>;
+  private _records: ReadonlyArray<FlatfileRecord>;
   private readonly _logger: Logger;
 
   constructor(params: {
     displayName: string;
     fields: Map<string, Field<T extends infer F ? F : never>>;
     computeFn?: (opts: {
-      records: Array<FlatfileRecord>;
+      records: ReadonlyArray<FlatfileRecord>;
       env: Env;
       logger: Logger;
     }) => void;
@@ -40,7 +44,7 @@ export class Sheet<T = never> {
     // params
     this.displayName = params.displayName;
     this.fields = params.fields;
-    this.computeFn = params.computeFn;
+    this.computeFn = O.fromNullable(params.computeFn);
 
     // internal
     this._records = [];
@@ -56,15 +60,16 @@ export class Sheet<T = never> {
   /* Compute Fn */
 
   private _runComputeFn(): void {
-    if (G.isNotNil(this.computeFn)) {
-      const newValue = this.computeFn({
-        records: this._records,
-        env: {},
-        logger: this._logger,
-      });
-
-      // this.setValue(newValue);
-    }
+    pipe(
+      this.computeFn,
+      O.match(constVoid, (computeFn) => {
+        const newValue = computeFn({
+          records: this._records,
+          env: {},
+          logger: this._logger,
+        });
+      }),
+    );
   }
 
   /**
@@ -77,10 +82,9 @@ export class Sheet<T = never> {
 
 export class SheetBuilder<T = never> {
   private readonly displayName: string;
-  // private fields: Map<string, Field<unknown>>;
   private fields: Map<string, Field<T extends infer F ? F : never>>;
   private computeFn?: (opts: {
-    records: Array<FlatfileRecord>;
+    records: ReadonlyArray<FlatfileRecord>;
     env: Env;
     logger: Logger;
   }) => void;
@@ -97,12 +101,6 @@ export class SheetBuilder<T = never> {
    * @param {Field} field - field type class instantiation
    * @returns this
    */
-  //   withField(key: string, field: Field<unknown>): this {
-  //     this.fields = this.fields.set(key, field);
-  //
-  //     return this;
-  //   }
-
   withField(key: string, field: Field<any>): this {
     this.fields = this.fields.set(key, field);
 
@@ -116,7 +114,7 @@ export class SheetBuilder<T = never> {
    */
   withCompute(
     handler: (opts: {
-      records: Array<FlatfileRecord>;
+      records: ReadonlyArray<FlatfileRecord>;
       env: Env;
       logger: Logger;
     }) => void,
@@ -131,11 +129,11 @@ export class SheetBuilder<T = never> {
    *
    * @returns this
    */
-  //   withAction(handler: (event: unknown) => void): this {
-  //     this.sheet.addAction(handler);
-  //
-  //     return this;
-  //   }
+  withAction(handler: (event: unknown) => void): this {
+    // this.sheet.addAction(handler);
+
+    return this;
+  }
 
   /**
    * Final call to return an instantiated TextField.

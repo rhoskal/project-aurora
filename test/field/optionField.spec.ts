@@ -1,12 +1,16 @@
 import { OptionFieldBuilder } from "../../src/field/optionField";
-import { Message } from "../../src/field/message";
-import * as G from "../../src/helpers/typeGuards";
 
 type Nullable<T> = null | T;
 
 describe("OptionField", () => {
   it("should handle simple creation", () => {
-    const optionField = new OptionFieldBuilder("Foo").build();
+    const choices: Record<"colorado", string> = {
+      colorado: "Colorado",
+    };
+
+    const optionField = new OptionFieldBuilder("Foo")
+      .withChoices(choices)
+      .build();
 
     expect(optionField.getLabel()).toBe("Foo");
     expect(optionField.getDescription()).toBe("");
@@ -16,8 +20,13 @@ describe("OptionField", () => {
   });
 
   it("should handle setting a description", () => {
+    const choices: Record<"colorado", string> = {
+      colorado: "Colorado",
+    };
+
     const optionField = new OptionFieldBuilder("Foo")
       .withDescription("Some description")
+      .withChoices(choices)
       .build();
 
     const actual: string = optionField.getDescription();
@@ -27,7 +36,14 @@ describe("OptionField", () => {
   });
 
   it("should handle marking as required", () => {
-    const optionField = new OptionFieldBuilder("Foo").withRequired().build();
+    const choices: Record<"colorado", string> = {
+      colorado: "Colorado",
+    };
+
+    const optionField = new OptionFieldBuilder("Foo")
+      .withChoices(choices)
+      .withRequired()
+      .build();
 
     const actual: boolean = optionField.getIsRequired();
     const expected: boolean = true;
@@ -55,4 +71,12 @@ describe("OptionField", () => {
   });
 
   it("should handle setting choices asynchronously", () => {});
+
+  it("should handle creation with choices set", () => {
+    expect(() => {
+      new OptionFieldBuilder("Foo").build();
+    }).toThrowError(
+      Error("Either `withChoices()` or `withChoicesAsync()` must be present."),
+    );
+  });
 });
