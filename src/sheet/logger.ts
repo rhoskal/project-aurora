@@ -8,27 +8,33 @@ export class Logger implements FlatfileLogger {
   constructor() {}
 
   /**
-   * Info message
+   * Prints an info type message.
    *
-   * @param {string} message
+   * @param message
+   *
+   * @since 0.0.1
    */
   info(message: string): void {
     console.log(message);
   }
 
   /**
-   * Warning message
+   * Prints a warning type message.
    *
-   * @param {string} message
+   * @param message
+   *
+   * @since 0.0.1
    */
   warn(message: string): void {
     console.warn(message);
   }
 
   /**
-   * Error message
+   * Prints an error type message.
    *
-   * @param {string} message
+   * @param message
+   *
+   * @since 0.0.1
    */
   error(message: string): void {
     console.error(message);

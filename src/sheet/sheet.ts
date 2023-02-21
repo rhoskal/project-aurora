@@ -80,6 +80,17 @@ export class Sheet<T = never> {
   }
 }
 
+/**
+ * Builder class for a Sheet.
+ *
+ * @example
+ * import { TextFieldBuilder, SheetBuilder } from "@";
+ *
+ * const textField = new TextFieldBuilder("Foo").build();
+ * const sheet = new SheetBuilder("Bar").withField("foo", textField).build();
+ *
+ * @since 0.0.1
+ */
 export class SheetBuilder<T = never> {
   private readonly displayName: string;
   private fields: Map<string, Field<T extends infer F ? F : never>>;
@@ -89,6 +100,11 @@ export class SheetBuilder<T = never> {
     logger: Logger;
   }) => void;
 
+  /**
+   * Creates a simple, empty Sheet.
+   *
+   * @param label
+   */
   constructor(displayName: string) {
     this.displayName = displayName;
     this.fields = new Map();
@@ -97,9 +113,12 @@ export class SheetBuilder<T = never> {
   /**
    * Adds a field to the Sheet.
    *
-   * @param {string} key - internal key
-   * @param {Field} field - field type class instantiation
+   * @param key - internal key
+   * @param field - field type class instantiation
+   *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withField(key: string, field: Field<any>): this {
     this.fields = this.fields.set(key, field);
@@ -111,6 +130,8 @@ export class SheetBuilder<T = never> {
    * Run computations on all records in the Sheet.
    *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withCompute(
     handler: (opts: {
@@ -128,6 +149,8 @@ export class SheetBuilder<T = never> {
    * Configure a custom action.
    *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withAction(handler: (event: unknown) => void): this {
     // this.sheet.addAction(handler);
@@ -139,6 +162,8 @@ export class SheetBuilder<T = never> {
    * Final call to return an instantiated Sheet.
    *
    * @returns Sheet
+   *
+   * @since 0.0.1
    */
   build(): never | Sheet {
     if (this.fields.size === 0) {

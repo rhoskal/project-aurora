@@ -218,9 +218,13 @@ export class NumberField {
  * Builder class for a NumberField.
  *
  * @example
+ * import { NumberFieldBuilder } from "@";
+ *
  * const age = new NumberFieldBuilder("Age")
  *   .withDescription("Contact's age")
  *   .build();
+ *
+ * @since 0.0.1
  */
 export class NumberFieldBuilder implements Builder<NumberField> {
   private readonly label: string;
@@ -236,6 +240,11 @@ export class NumberFieldBuilder implements Builder<NumberField> {
     env: Env,
   ) => Promise<void | Message>;
 
+  /**
+   * Creates a simple, empty NumberField.
+   *
+   * @param label
+   */
   constructor(label: string) {
     this.label = label;
   }
@@ -243,8 +252,11 @@ export class NumberFieldBuilder implements Builder<NumberField> {
   /**
    * Sets the value in the UI table the user will see when they hover their mouse over the column header.
    *
-   * @param {string} description - visible on hover of column header
+   * @param description - Visible on hover of column header.
+   *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withDescription(description: string): this {
     this.description = description;
@@ -256,6 +268,8 @@ export class NumberFieldBuilder implements Builder<NumberField> {
    * Ensures a field must have a value otherwise an error message will be present.
    *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withRequired(): this {
     this.isRequired = true;
@@ -267,6 +281,8 @@ export class NumberFieldBuilder implements Builder<NumberField> {
    * Ensures a user cannot edit the value.
    *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withReadOnly(): this {
     this.isReadOnly = true;
@@ -278,6 +294,8 @@ export class NumberFieldBuilder implements Builder<NumberField> {
    * Ensures a value is unique in the entire column.
    *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withUnique(): this {
     this.isUnique = true;
@@ -289,7 +307,10 @@ export class NumberFieldBuilder implements Builder<NumberField> {
    * Sets a default value when none was provided by the user.
    *
    * @param value
+   *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withDefault(value: number): this {
     this.defaultValue = value;
@@ -300,8 +321,11 @@ export class NumberFieldBuilder implements Builder<NumberField> {
   /**
    * Change the current value into something new.
    *
-   * @callback handler
+   * @param handler
+   *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withCompute(handler: (value: Nullable<number>) => number): this {
     this.computeFn = handler;
@@ -312,8 +336,11 @@ export class NumberFieldBuilder implements Builder<NumberField> {
   /**
    * Validate the current value against certain conditions and display a message to the user when those conditions are not met.
    *
-   * @callback handler
+   * @param handler
+   *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withValidate(handler: (value: Nullable<number>) => void | Message): this {
     this.validateFn = handler;
@@ -324,9 +351,11 @@ export class NumberFieldBuilder implements Builder<NumberField> {
   /**
    * Sets the value asynchronously.
    *
-   * @callback handler
-   * @returns {Promise}
+   * @param handler
+   *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withValidateAsync(
     handler: (value: Nullable<number>, env: Env) => Promise<void | Message>,
@@ -340,6 +369,8 @@ export class NumberFieldBuilder implements Builder<NumberField> {
    * Final call to return an instantiated NumberField.
    *
    * @returns NumberField
+   *
+   * @since 0.0.1
    */
   build(): NumberField {
     return new NumberField({

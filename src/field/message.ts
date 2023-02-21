@@ -15,10 +15,24 @@ export class Message {
     this.content = message;
   }
 
+  /**
+   * Gets the serverity.
+   *
+   * @returns Severity
+   *
+   * @since 0.0.1
+   */
   public getSeverity(): Severity {
     return this.severity;
   }
 
+  /**
+   * Gets the content.
+   *
+   * @returns string
+   *
+   * @since 0.0.1
+   */
   public getContent(): string {
     return this.content;
   }

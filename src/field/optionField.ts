@@ -142,11 +142,15 @@ export class OptionField {
  * Builder class for a OptionField.
  *
  * @example
+ * import { OptionFieldBuilder } from "@";
+ *
  * const state = new OptionFieldBuilder("State")
  *   .withChoices({
  *     colorado: "Colorado",
  *   })
  *   .build();
+ *
+ * @since 0.0.1
  */
 export class OptionFieldBuilder implements Builder<OptionField> {
   private readonly label: string;
@@ -155,6 +159,11 @@ export class OptionFieldBuilder implements Builder<OptionField> {
   private choices?: Record<string, unknown>;
   private choicesFnAsync?: (env: Env) => Promise<Record<string, unknown>>;
 
+  /**
+   * Creates a simple, empty OptionField.
+   *
+   * @param label
+   */
   constructor(label: string) {
     this.label = label;
   }
@@ -162,8 +171,11 @@ export class OptionFieldBuilder implements Builder<OptionField> {
   /**
    * Sets the value in the UI table the user will see when they hover their mouse over the column header.
    *
-   * @param {string} description - visible on hover of column header
+   * @param {string} description - Visible on hover of column header.
+   *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withDescription(description: string): this {
     this.description = description;
@@ -175,6 +187,8 @@ export class OptionFieldBuilder implements Builder<OptionField> {
    * Ensures a field must have a value otherwise an error message will be present.
    *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withRequired(): this {
     this.isRequired = true;
@@ -185,8 +199,11 @@ export class OptionFieldBuilder implements Builder<OptionField> {
   /**
    * Sets the choice synchronously.
    *
-   * @param {Object} choices
+   * @param choices
+   *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withChoices(choices: Record<string, unknown>): this {
     this.choices = choices;
@@ -198,8 +215,10 @@ export class OptionFieldBuilder implements Builder<OptionField> {
    * Sets the choice asynchronously.
    *
    * @callback handler
-   * @returns {Promise}
+   *
    * @returns this
+   *
+   * @since 0.0.1
    */
   withChoicesAsync(
     handler: (env: Env) => Promise<Record<string, unknown>>,
@@ -213,6 +232,8 @@ export class OptionFieldBuilder implements Builder<OptionField> {
    * Final call to return an instantiated OptionField.
    *
    * @returns OptionField
+   *
+   * @since 0.0.1
    */
   build(): never | OptionField {
     if (G.isUndefined(this.choices) && G.isUndefined(this.choicesFnAsync)) {

@@ -8,6 +8,7 @@ import { OptionFieldBuilder } from "./field/optionField";
 import { SheetBuilder } from "./sheet/sheet";
 import { TextFieldBuilder } from "./field/textField";
 import { WorkbookBuilder } from "./workbook/workbook";
+import { ReferenceFieldBuilder } from "./field/referenceField";
 // import { FlatfileRecordBuilder as FlatfileRecord } from "./sheet/flatfileRecord";
 import { SpaceConfigBuilder } from "./space/spaceConfig";
 import * as G from "./helpers/typeGuards";
@@ -113,6 +114,16 @@ const state = new OptionFieldBuilder("State")
       .then(({ data }: { data: Record<string, string> }) => data)
       .catch((_e) => ({}));
   })
+  .build();
+
+// should this exist on the workbook since we have access to the sheets their?
+// how to continue builder pattern here when so many params are required?
+const reference = new ReferenceFieldBuilder("Some reference field")
+  .withDescription("asdf")
+  .withCardinality("has-one")
+  // .withForeignKey("key", sheet) // but we haven't created sheet yet :(
+  // .withReferenceField(field) // how to access other sheet?
+  // .withRelation(field, references: key) // like Prisma
   .build();
 
 const contactsSheet = new SheetBuilder("Contacts")
