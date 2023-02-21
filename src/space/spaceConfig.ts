@@ -2,10 +2,13 @@ import * as Eq from "fp-ts/Eq";
 import * as O from "fp-ts/Option";
 import * as RA from "fp-ts/ReadonlyArray";
 import { pipe } from "fp-ts/function";
+import * as Str from "fp-ts/string";
+
 import { Workbook } from "../workbook/workbook";
 
 const eqWorkbook: Eq.Eq<Workbook> = {
-  equals: (wb1, wb2) => wb1.getDisplayName() === wb2.getDisplayName(),
+  equals: (wb1, wb2) =>
+    Str.Eq.equals(wb1.getDisplayName(), wb2.getDisplayName()),
 };
 
 export class SpaceConfig {
@@ -51,7 +54,7 @@ export class SpaceConfig {
 
 /**
  * Builder class for a SpaceConfig.
- * 
+ *
  * @example
  * import { TextFieldBuilder, SheetBuilder, WorkbookBuilder, SpaceConfigBuilder } from "@";
  * const textField = new TextFieldBuilder("Foo").build();
@@ -60,7 +63,7 @@ export class SpaceConfig {
  * const spaceConfig = new SpaceConfigBuilder("X")
      .withWorkbook(workbook)
      .build();
- * 
+ *
  * @since 0.0.1
  */
 export class SpaceConfigBuilder {

@@ -2,6 +2,7 @@ import * as Eq from "fp-ts/Eq";
 import * as O from "fp-ts/Option";
 import * as RA from "fp-ts/ReadonlyArray";
 import { pipe, constVoid } from "fp-ts/function";
+import * as Str from "fp-ts/string";
 
 import { Builder } from "./builder";
 import { Message } from "./message";
@@ -11,8 +12,8 @@ type Env = Record<string, unknown>;
 
 const eqMessage: Eq.Eq<Message> = {
   equals: (m1, m2) =>
-    m1.getSeverity() === m2.getSeverity() &&
-    m1.getContent() === m2.getContent(),
+    Str.Eq.equals(m1.getSeverity(), m2.getSeverity()) &&
+    Str.Eq.equals(m1.getContent(), m2.getContent()),
 };
 
 export class DateField {
