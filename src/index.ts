@@ -40,14 +40,13 @@ const salary = new NumberFieldBuilder("Salary")
   })
   .build();
 
-// const age = new NumberField()
-//   .withLabel("Age")
+// const age = new NumberFieldBuilder("Age")
 //   .withReadOnly()
-//   .withVirtual()
 //   .withCompute((value) => {
 //     // how to access dob?
-//     // computed fields need to reference another field
+//     // computed fields need to reference other fields within the sheet
 //   });
+// const age = new ComputedFieldBuilder("Age");
 
 const emailSimple = new TextFieldBuilder("Email Simple")
   .withRequired()
@@ -149,6 +148,7 @@ const contactsSheet = new SheetBuilder("Contacts")
   // })
   // .withAction((event) => {})
   // .withAction("records:updated", (event) => {})
+  // .withComputedField("age", ["dob"], age);
   .build();
 
 const workbook = new WorkbookBuilder("Fundraiser Contacts")
