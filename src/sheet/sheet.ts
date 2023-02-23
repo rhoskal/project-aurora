@@ -92,9 +92,9 @@ export class Sheet<T = never> {
  * @since 0.0.1
  */
 export class SheetBuilder<T = never> {
-  private readonly displayName: string;
-  private fields: Map<string, Field<T extends infer F ? F : never>>;
-  private computeFn?: (opts: {
+  readonly #displayName: string;
+  #fields: Map<string, Field<T extends infer F ? F : never>>;
+  #computeFn?: (opts: {
     records: ReadonlyArray<FlatfileRecord>;
     env: Env;
     logger: Logger;
@@ -106,8 +106,8 @@ export class SheetBuilder<T = never> {
    * @param label
    */
   constructor(displayName: string) {
-    this.displayName = displayName;
-    this.fields = new Map();
+    this.#displayName = displayName;
+    this.#fields = new Map();
   }
 
   /**
@@ -121,7 +121,7 @@ export class SheetBuilder<T = never> {
    * @since 0.0.1
    */
   withField(key: string, field: Field<any>): this {
-    this.fields = this.fields.set(key, field);
+    this.#fields = this.#fields.set(key, field);
 
     return this;
   }
@@ -140,7 +140,7 @@ export class SheetBuilder<T = never> {
       logger: Logger;
     }) => void,
   ): this {
-    this.computeFn = handler;
+    this.#computeFn = handler;
 
     return this;
   }
@@ -166,14 +166,14 @@ export class SheetBuilder<T = never> {
    * @since 0.0.1
    */
   build(): never | Sheet {
-    if (this.fields.size === 0) {
+    if (this.#fields.size === 0) {
       throw new Error("A Sheet must include at least one field.");
     }
 
     return new Sheet({
-      displayName: this.displayName,
-      fields: this.fields,
-      computeFn: this.computeFn,
+      displayName: this.#displayName,
+      fields: this.#fields,
+      computeFn: this.#computeFn,
     });
   }
 }

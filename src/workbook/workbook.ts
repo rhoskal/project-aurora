@@ -7,10 +7,10 @@ import { Sheet } from "../sheet/sheet";
 type Env = Record<string, unknown>;
 
 export class Workbook {
-  private readonly displayName: string;
+  readonly #displayName: string;
 
-  private _sheets: ReadonlyArray<Sheet>;
-  private _env: Env;
+  #sheets: ReadonlyArray<Sheet>;
+  #env: Env;
 
   constructor(params: {
     displayName: string;
@@ -18,26 +18,26 @@ export class Workbook {
     env?: Env;
   }) {
     // params
-    this.displayName = params.displayName;
+    this.#displayName = params.displayName;
 
     // internal
-    this._sheets = params.sheets;
-    this._env = pipe(
+    this.#sheets = params.sheets;
+    this.#env = pipe(
       O.fromNullable(params.env),
       O.getOrElse(() => ({})),
     );
   }
 
   public getDisplayName(): string {
-    return this.displayName;
+    return this.#displayName;
   }
 
   public getEnv(): Env {
-    return this._env;
+    return this.#env;
   }
 
   public getSheets(): ReadonlyArray<Sheet> {
-    return this._sheets;
+    return this.#sheets;
   }
 }
 
@@ -54,9 +54,9 @@ export class Workbook {
  * @since 0.0.1
  */
 export class WorkbookBuilder {
-  private displayName: string;
-  private sheets: ReadonlyArray<Sheet>;
-  private env?: Env;
+  #displayName: string;
+  #sheets: ReadonlyArray<Sheet>;
+  #env?: Env;
 
   /**
    * Creates a simple, empty Workbook.
@@ -64,8 +64,8 @@ export class WorkbookBuilder {
    * @param displayName
    */
   constructor(displayName: string) {
-    this.displayName = displayName;
-    this.sheets = [];
+    this.#displayName = displayName;
+    this.#sheets = [];
   }
 
   /**
@@ -78,7 +78,7 @@ export class WorkbookBuilder {
    * @since 0.0.1
    */
   withSheet(sheet: Sheet): this {
-    this.sheets = RA.append(sheet)(this.sheets);
+    this.#sheets = RA.append(sheet)(this.#sheets);
 
     return this;
   }
@@ -93,7 +93,7 @@ export class WorkbookBuilder {
    * @since 0.0.1
    */
   withEnv(env: Env): this {
-    this.env = env;
+    this.#env = env;
 
     return this;
   }
@@ -106,14 +106,14 @@ export class WorkbookBuilder {
    * @since 0.0.1
    */
   build(): never | Workbook {
-    if (this.sheets.length === 0) {
+    if (this.#sheets.length === 0) {
       throw new Error("A Workbook must include at least 1 Sheet.");
     }
 
     return new Workbook({
-      displayName: this.displayName,
-      sheets: this.sheets,
-      env: this.env,
+      displayName: this.#displayName,
+      sheets: this.#sheets,
+      env: this.#env,
     });
   }
 }

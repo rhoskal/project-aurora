@@ -18,17 +18,17 @@ const eqMessage: Eq.Eq<Message> = {
 };
 
 export class OptionField {
-  private readonly label: string;
-  private readonly description: string;
-  private readonly isRequired: boolean;
-  private readonly choicesFnAsync: O.Option<
+  readonly #label: string;
+  readonly #description: string;
+  readonly #isRequired: boolean;
+  readonly #choicesFnAsync: O.Option<
     (env: Env) => Promise<Record<string, unknown>>
   >;
 
-  private _value: O.Option<string>;
-  private _choices: Record<string, unknown>;
-  private _messages: ReadonlyArray<Message>;
-  private _env: Env;
+  #value: O.Option<string>;
+  #choices: Record<string, unknown>;
+  #messages: ReadonlyArray<Message>;
+  #env: Env;
 
   constructor(params: {
     label: string;
@@ -38,58 +38,58 @@ export class OptionField {
     choicesFnAsync?: (env: Env) => Promise<Record<string, unknown>>;
   }) {
     // params
-    this.label = params.label;
-    this.description = pipe(
+    this.#label = params.label;
+    this.#description = pipe(
       O.fromNullable(params.description),
       O.getOrElse(() => ""),
     );
-    this.isRequired = pipe(
+    this.#isRequired = pipe(
       O.fromNullable(params.isRequired),
       O.getOrElse(() => false),
     );
-    this.choicesFnAsync = O.fromNullable(params.choicesFnAsync);
+    this.#choicesFnAsync = O.fromNullable(params.choicesFnAsync);
 
     // internal
-    this._value = O.none;
-    this._choices = pipe(
+    this.#value = O.none;
+    this.#choices = pipe(
       O.fromNullable(params.choices),
       O.getOrElse(() => ({})),
     );
-    this._messages = [];
-    this._env = {};
+    this.#messages = [];
+    this.#env = {};
   }
 
   /* Label */
 
   public getLabel(): string {
-    return this.label;
+    return this.#label;
   }
 
   /* Description */
 
   public getDescription(): string {
-    return this.description;
+    return this.#description;
   }
 
   /* Required */
 
   public getIsRequired(): boolean {
-    return this.isRequired;
+    return this.#isRequired;
   }
 
   /* Choices Fn */
 
   public getChoices(): Record<string, unknown> {
-    return this._choices;
+    return this.#choices;
   }
 
   private async _runChoicesAsync(): Promise<void> {
     pipe(
-      this.choicesFnAsync,
+      this.#choicesFnAsync,
       O.match(constVoid, async (choicesFnAsync) => {
-        const choices = await choicesFnAsync(this._env);
+        const choices = await choicesFnAsync(this.#env);
 
-        this._choices = choices;
+        this.#choices = choices;
       }),
     );
   }
@@ -105,24 +105,24 @@ export class OptionField {
 
   public getValue(): Nullable<string> {
     return pipe(
-      this._value,
+      this.#value,
       O.getOrElseW(() => null),
     );
   }
 
   public setValue(value: string): void {
-    this._value = O.some(value);
+    this.#value = O.some(value);
   }
 
   /* Messages */
 
   public getMessages(): ReadonlyArray<Message> {
-    return this._messages;
+    return this.#messages;
   }
 
   private _addMessage(message: Message): void {
-    this._messages = pipe(
-      this._messages,
+    this.#messages = pipe(
+      this.#messages,
       RA.append(message),
       RA.uniq(eqMessage),
     );
@@ -131,11 +131,11 @@ export class OptionField {
   /* Env */
 
   public getEnv(): Env {
-    return this._env;
+    return this.#env;
   }
 
   public setEnv(env: Env): void {
-    this._env = env;
+    this.#env = env;
   }
 }
 
@@ -154,11 +154,11 @@ export class OptionField {
  * @since 0.0.1
  */
 export class OptionFieldBuilder implements Builder<OptionField> {
-  private readonly label: string;
-  private description?: string;
-  private isRequired?: boolean;
-  private choices?: Record<string, unknown>;
-  private choicesFnAsync?: (env: Env) => Promise<Record<string, unknown>>;
+  readonly #label: string;
+  #description?: string;
+  #isRequired?: boolean;
+  #choices?: Record<string, unknown>;
+  #choicesFnAsync?: (env: Env) => Promise<Record<string, unknown>>;
 
   /**
    * Creates a simple, empty OptionField.
@@ -166,7 +166,7 @@ export class OptionFieldBuilder implements Builder<OptionField> {
    * @param label
    */
   constructor(label: string) {
-    this.label = label;
+    this.#label = label;
   }
 
   /**
@@ -179,7 +179,7 @@ export class OptionFieldBuilder implements Builder<OptionField> {
    * @since 0.0.1
    */
   withDescription(description: string): this {
-    this.description = description;
+    this.#description = description;
 
     return this;
   }
@@ -192,7 +192,7 @@ export class OptionFieldBuilder implements Builder<OptionField> {
    * @since 0.0.1
    */
   withRequired(): this {
-    this.isRequired = true;
+    this.#isRequired = true;
 
     return this;
   }
@@ -207,7 +207,7 @@ export class OptionFieldBuilder implements Builder<OptionField> {
    * @since 0.0.1
    */
   withChoices(choices: Record<string, unknown>): this {
-    this.choices = choices;
+    this.#choices = choices;
 
     return this;
   }
@@ -224,7 +224,7 @@ export class OptionFieldBuilder implements Builder<OptionField> {
   withChoicesAsync(
     handler: (env: Env) => Promise<Record<string, unknown>>,
   ): this {
-    this.choicesFnAsync = handler;
+    this.#choicesFnAsync = handler;
 
     return this;
   }
@@ -237,24 +237,24 @@ export class OptionFieldBuilder implements Builder<OptionField> {
    * @since 0.0.1
    */
   build(): never | OptionField {
-    if (G.isUndefined(this.choices) && G.isUndefined(this.choicesFnAsync)) {
+    if (G.isUndefined(this.#choices) && G.isUndefined(this.#choicesFnAsync)) {
       throw Error(
         "Either `withChoices()` or `withChoicesAsync()` must be present.",
       );
     }
 
-    if (G.isNotNil(this.choices) && G.isNotNil(this.choicesFnAsync)) {
+    if (G.isNotNil(this.#choices) && G.isNotNil(this.#choicesFnAsync)) {
       throw Error(
         "Please choose either `withChoices()` or `withChoicesAsync()` since both are present.",
       );
     }
 
     return new OptionField({
-      label: this.label,
-      description: this.description,
-      isRequired: this.isRequired,
-      choices: this.choices,
-      choicesFnAsync: this.choicesFnAsync,
+      label: this.#label,
+      description: this.#description,
+      isRequired: this.#isRequired,
+      choices: this.#choices,
+      choicesFnAsync: this.#choicesFnAsync,
     });
   }
 }

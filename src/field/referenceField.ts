@@ -19,14 +19,14 @@ const eqMessage: Eq.Eq<Message> = {
 };
 
 export class ReferenceField {
-  private readonly label: string;
-  private readonly description: string;
-  private readonly isRequired: boolean;
-  private readonly cardinality: Cardinality;
+  readonly #label: string;
+  readonly #description: string;
+  readonly #isRequired: boolean;
+  readonly #cardinality: Cardinality;
 
-  private _value: O.Option<string>;
-  private _messages: ReadonlyArray<Message>;
-  private _env: Env;
+  #value: O.Option<string>;
+  #messages: ReadonlyArray<Message>;
+  #env: Env;
 
   constructor(params: {
     label: string;
@@ -35,69 +35,69 @@ export class ReferenceField {
     cardinality: Cardinality;
   }) {
     // params
-    this.label = params.label;
-    this.description = pipe(
+    this.#label = params.label;
+    this.#description = pipe(
       O.fromNullable(params.description),
       O.getOrElse(() => ""),
     );
-    this.isRequired = pipe(
+    this.#isRequired = pipe(
       O.fromNullable(params.isRequired),
       O.getOrElse(() => false),
     );
-    this.cardinality = params.cardinality;
+    this.#cardinality = params.cardinality;
 
     // internal
-    this._value = O.none;
-    this._messages = [];
-    this._env = {};
+    this.#value = O.none;
+    this.#messages = [];
+    this.#env = {};
   }
 
   /* Label */
 
   public getLabel(): string {
-    return this.label;
+    return this.#label;
   }
 
   /* Description */
 
   public getDescription(): string {
-    return this.description;
+    return this.#description;
   }
 
   /* Required */
 
   public getIsRequired(): boolean {
-    return this.isRequired;
+    return this.#isRequired;
   }
 
   /* Cardinality */
 
   public getCardinality(): Cardinality {
-    return this.cardinality;
+    return this.#cardinality;
   }
 
   /* Value */
 
   public getValue(): Nullable<string> {
     return pipe(
-      this._value,
+      this.#value,
       O.getOrElseW(() => null),
     );
   }
 
   public setValue(value: string): void {
-    this._value = O.some(value);
+    this.#value = O.some(value);
   }
 
   /* Messages */
 
   public getMessages(): ReadonlyArray<Message> {
-    return this._messages;
+    return this.#messages;
   }
 
   private _addMessage(message: Message): void {
-    this._messages = pipe(
-      this._messages,
+    this.#messages = pipe(
+      this.#messages,
       RA.append(message),
       RA.uniq(eqMessage),
     );
@@ -106,11 +106,11 @@ export class ReferenceField {
   /* Env */
 
   public getEnv(): Env {
-    return this._env;
+    return this.#env;
   }
 
   public setEnv(env: Env): void {
-    this._env = env;
+    this.#env = env;
   }
 }
 
@@ -128,10 +128,10 @@ export class ReferenceField {
  * @since 0.0.1
  */
 export class ReferenceFieldBuilder implements Builder<ReferenceField> {
-  private readonly label: string;
-  private description?: string;
-  private isRequired?: boolean;
-  private cardinality?: Cardinality;
+  readonly #label: string;
+  #description?: string;
+  #isRequired?: boolean;
+  #cardinality?: Cardinality;
 
   /**
    * Creates a simple, empty ReferenceField.
@@ -140,7 +140,7 @@ export class ReferenceFieldBuilder implements Builder<ReferenceField> {
    * @param cardinality
    */
   constructor(label: string) {
-    this.label = label;
+    this.#label = label;
   }
 
   /**
@@ -153,7 +153,7 @@ export class ReferenceFieldBuilder implements Builder<ReferenceField> {
    * @since 0.0.1
    */
   withDescription(description: string): this {
-    this.description = description;
+    this.#description = description;
 
     return this;
   }
@@ -166,7 +166,7 @@ export class ReferenceFieldBuilder implements Builder<ReferenceField> {
    * @since 0.0.1
    */
   withRequired(): this {
-    this.isRequired = true;
+    this.#isRequired = true;
 
     return this;
   }
@@ -181,7 +181,7 @@ export class ReferenceFieldBuilder implements Builder<ReferenceField> {
    * @since 0.0.1
    */
   withCardinality(cardinality: Cardinality): this {
-    this.cardinality = cardinality;
+    this.#cardinality = cardinality;
 
     return this;
   }
@@ -194,17 +194,17 @@ export class ReferenceFieldBuilder implements Builder<ReferenceField> {
    * @since 0.0.1
    */
   build(): never | ReferenceField {
-    if (G.isUndefined(this.cardinality)) {
+    if (G.isUndefined(this.#cardinality)) {
       throw new Error(
         "You must specify a cardinality with `withCardinality()`",
       );
     }
 
     return new ReferenceField({
-      label: this.label,
-      description: this.description,
-      isRequired: this.isRequired,
-      cardinality: this.cardinality,
+      label: this.#label,
+      description: this.#description,
+      isRequired: this.#isRequired,
+      cardinality: this.#cardinality,
     });
   }
 }

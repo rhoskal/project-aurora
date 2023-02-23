@@ -15,32 +15,32 @@ const eqMessage: Eq.Eq<Message> = {
 };
 
 export class FFRecord<O extends object = {}> {
-  private _value: O;
-  private _messages: ReadonlyArray<Message>;
+  #value: O;
+  #messages: ReadonlyArray<Message>;
 
   constructor(record: O) {
-    this._value = record;
-    this._messages = [];
+    this.#value = record;
+    this.#messages = [];
   }
 
   get(key: Key<O>): Value<O> {
-    return this._value[key];
+    return this.#value[key];
   }
 
   set(key: Key<O>, value: Value<O>): void {
-    this._value[key] = value;
+    this.#value[key] = value;
   }
 
   public addMessage(key: Key<O>, message: Message): void {
-    this._messages = pipe(
-      this._messages,
+    this.#messages = pipe(
+      this.#messages,
       RA.append(message),
       RA.uniq(eqMessage),
     );
   }
 
   public getMessages(): ReadonlyArray<Message> {
-    return this._messages;
+    return this.#messages;
   }
 }
 
@@ -59,10 +59,10 @@ export interface FlatfileRecord<O extends object = {}> {
 export class FlatfileRecordBuilder<O extends object>
   implements FlatfileRecord<O>
 {
-  private flatfileRecord: FFRecord<O>;
+  #flatfileRecord: FFRecord<O>;
 
   constructor(record: O) {
-    this.flatfileRecord = new FFRecord<O>(record);
+    this.#flatfileRecord = new FFRecord<O>(record);
   }
 
   /**
@@ -72,7 +72,7 @@ export class FlatfileRecordBuilder<O extends object>
    * @returns unknown
    */
   get(key: Key<O>): Value<O> {
-    return this.flatfileRecord.get(key);
+    return this.#flatfileRecord.get(key);
   }
 
   /**
@@ -83,7 +83,7 @@ export class FlatfileRecordBuilder<O extends object>
    * @returns this
    */
   set(key: Key<O>, value: Value<O>): this {
-    this.flatfileRecord.set(key, value);
+    this.#flatfileRecord.set(key, value);
 
     return this;
   }
@@ -96,8 +96,8 @@ export class FlatfileRecordBuilder<O extends object>
    * @returns this
    */
   modify(key: Key<O>, handler: (value: Value<O>) => typeof value): this {
-    const currentValue = this.flatfileRecord.get(key);
-    this.flatfileRecord.set(key, handler(currentValue));
+    const currentValue = this.#flatfileRecord.get(key);
+    this.#flatfileRecord.set(key, handler(currentValue));
 
     return this;
   }
@@ -114,11 +114,11 @@ export class FlatfileRecordBuilder<O extends object>
     if (G.isArray<Key<O>>(keys)) {
       const msg = new Message("info", message);
 
-      keys.map((k) => this.flatfileRecord.addMessage(k, msg));
+      keys.map((k) => this.#flatfileRecord.addMessage(k, msg));
     } else {
       const msg = new Message("info", message);
 
-      this.flatfileRecord.addMessage(keys as Key<O>, msg);
+      this.#flatfileRecord.addMessage(keys as Key<O>, msg);
     }
 
     return this;
@@ -136,11 +136,11 @@ export class FlatfileRecordBuilder<O extends object>
     if (G.isArray<Key<O>>(keys)) {
       const msg = new Message("warn", message);
 
-      keys.map((k) => this.flatfileRecord.addMessage(k, msg));
+      keys.map((k) => this.#flatfileRecord.addMessage(k, msg));
     } else {
       const msg = new Message("warn", message);
 
-      this.flatfileRecord.addMessage(keys as Key<O>, msg);
+      this.#flatfileRecord.addMessage(keys as Key<O>, msg);
     }
 
     return this;
@@ -158,11 +158,11 @@ export class FlatfileRecordBuilder<O extends object>
     if (G.isArray<Key<O>>(keys)) {
       const msg = new Message("error", message);
 
-      keys.map((k) => this.flatfileRecord.addMessage(k, msg));
+      keys.map((k) => this.#flatfileRecord.addMessage(k, msg));
     } else {
       const msg = new Message("error", message);
 
-      this.flatfileRecord.addMessage(keys as Key<O>, msg);
+      this.#flatfileRecord.addMessage(keys as Key<O>, msg);
     }
 
     return this;

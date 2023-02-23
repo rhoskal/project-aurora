@@ -12,10 +12,10 @@ const eqWorkbook: Eq.Eq<Workbook> = {
 };
 
 export class SpaceConfig {
-  private readonly name: string;
+  readonly #name: string;
 
-  private _slug: string;
-  private _workbooks: ReadonlyArray<Workbook>;
+  #slug: string;
+  #workbooks: ReadonlyArray<Workbook>;
 
   constructor(params: {
     name: string;
@@ -23,32 +23,32 @@ export class SpaceConfig {
     workbooks: ReadonlyArray<Workbook>;
   }) {
     // params
-    this.name = params.name;
+    this.#name = params.name;
 
     // internal
-    this._slug = pipe(
+    this.#slug = pipe(
       O.fromNullable(params.slug),
       O.getOrElse(() => "some_generated_slug"),
     );
-    this._workbooks = params.workbooks;
+    this.#workbooks = params.workbooks;
   }
 
   /* Name */
 
   public getName(): string {
-    return this.name;
+    return this.#name;
   }
 
   /* Slug */
 
   public getSlug(): string {
-    return this._slug;
+    return this.#slug;
   }
 
   /* Workbooks */
 
   public getWorkbooks(): ReadonlyArray<Workbook> {
-    return this._workbooks;
+    return this.#workbooks;
   }
 }
 
@@ -67,9 +67,9 @@ export class SpaceConfig {
  * @since 0.0.1
  */
 export class SpaceConfigBuilder {
-  private readonly name: string;
-  private slug?: string;
-  private workooks: ReadonlyArray<Workbook>;
+  readonly #name: string;
+  #slug?: string;
+  #workooks: ReadonlyArray<Workbook>;
 
   /**
    * Creates a simple, empty SpaceConfig.
@@ -77,8 +77,8 @@ export class SpaceConfigBuilder {
    * @param name
    */
   constructor(name: string) {
-    this.name = name;
-    this.workooks = [];
+    this.#name = name;
+    this.#workooks = [];
   }
 
   /**
@@ -91,7 +91,7 @@ export class SpaceConfigBuilder {
    * @since 0.0.1
    */
   public withSlug(slug: string): this {
-    this.slug = slug;
+    this.#slug = slug;
 
     return this;
   }
@@ -106,8 +106,8 @@ export class SpaceConfigBuilder {
    * @since 0.0.1
    */
   public withWorkbook(workbook: Workbook): this {
-    this.workooks = pipe(
-      this.workooks,
+    this.#workooks = pipe(
+      this.#workooks,
       RA.append(workbook),
       RA.uniq(eqWorkbook),
     );
@@ -123,14 +123,14 @@ export class SpaceConfigBuilder {
    * @since 0.0.1
    */
   build(): never | SpaceConfig {
-    if (this.workooks.length === 0) {
+    if (this.#workooks.length === 0) {
       throw new Error("A Space Config must include at least 1 Workbook.");
     }
 
     return new SpaceConfig({
-      name: this.name,
-      slug: this.slug,
-      workbooks: this.workooks,
+      name: this.#name,
+      slug: this.#slug,
+      workbooks: this.#workooks,
     });
   }
 }

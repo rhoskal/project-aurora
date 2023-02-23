@@ -17,25 +17,23 @@ const eqMessage: Eq.Eq<Message> = {
 };
 
 export class DateField {
-  private readonly label: string;
-  private readonly description: string;
-  private readonly isRequired: boolean;
-  private readonly isReadOnly: boolean;
-  private readonly isUnique: boolean;
-  private readonly defaultValue: O.Option<Date>;
-  private readonly displayFormat: O.Option<string>;
-  private readonly egressFormat: O.Option<string>;
-  private readonly computeFn: O.Option<(value: Nullable<Date>) => Date>;
-  private readonly validateFn: O.Option<
-    (value: Nullable<Date>) => void | Message
-  >;
-  private readonly validateFnAsync: O.Option<
+  readonly #label: string;
+  readonly #description: string;
+  readonly #isRequired: boolean;
+  readonly #isReadOnly: boolean;
+  readonly #isUnique: boolean;
+  readonly #defaultValue: O.Option<Date>;
+  readonly #displayFormat: O.Option<string>;
+  readonly #egressFormat: O.Option<string>;
+  readonly #computeFn: O.Option<(value: Nullable<Date>) => Date>;
+  readonly #validateFn: O.Option<(value: Nullable<Date>) => void | Message>;
+  readonly #validateFnAsync: O.Option<
     (value: Nullable<Date>, env: Env) => Promise<void | Message>
   >;
 
-  private _value: O.Option<Date>;
-  private _messages: ReadonlyArray<Message>;
-  private _env: Env;
+  #value: O.Option<Date>;
+  #messages: ReadonlyArray<Message>;
+  #env: Env;
 
   constructor(params: {
     label: string;
@@ -54,71 +52,71 @@ export class DateField {
     ) => Promise<void | Message>;
   }) {
     // params
-    this.label = params.label;
-    this.description = pipe(
+    this.#label = params.label;
+    this.#description = pipe(
       O.fromNullable(params.description),
       O.getOrElse(() => ""),
     );
-    this.isRequired = pipe(
+    this.#isRequired = pipe(
       O.fromNullable(params.isRequired),
       O.getOrElse(() => false),
     );
-    this.isReadOnly = pipe(
+    this.#isReadOnly = pipe(
       O.fromNullable(params.isReadOnly),
       O.getOrElse(() => false),
     );
-    this.isUnique = pipe(
+    this.#isUnique = pipe(
       O.fromNullable(params.isUnique),
       O.getOrElse(() => false),
     );
-    this.defaultValue = O.fromNullable(params.defaultValue);
-    this.displayFormat = O.fromNullable(params.displayFormat);
-    this.egressFormat = O.fromNullable(params.egressFormat);
-    this.computeFn = O.fromNullable(params.computeFn);
-    this.validateFn = O.fromNullable(params.validateFn);
-    this.validateFnAsync = O.fromNullable(params.validateFnAsync);
+    this.#defaultValue = O.fromNullable(params.defaultValue);
+    this.#displayFormat = O.fromNullable(params.displayFormat);
+    this.#egressFormat = O.fromNullable(params.egressFormat);
+    this.#computeFn = O.fromNullable(params.computeFn);
+    this.#validateFn = O.fromNullable(params.validateFn);
+    this.#validateFnAsync = O.fromNullable(params.validateFnAsync);
 
     // internal
-    this._value = O.none;
-    this._messages = [];
-    this._env = {};
+    this.#value = O.none;
+    this.#messages = [];
+    this.#env = {};
   }
 
   /* Label */
 
   public getLabel(): string {
-    return this.label;
+    return this.#label;
   }
 
   /* Description */
 
   public getDescription(): string {
-    return this.description;
+    return this.#description;
   }
 
   /* Required */
 
   public getIsRequired(): boolean {
-    return this.isRequired;
+    return this.#isRequired;
   }
 
   /* ReadOnly */
 
   public getIsReadOnly(): boolean {
-    return this.isReadOnly;
+    return this.#isReadOnly;
   }
 
   /* Unique */
 
   public getIsUnique(): boolean {
-    return this.isUnique;
+    return this.#isUnique;
   }
 
   /* Display Format */
 
   public getDisplayFormat(): Nullable<string> {
     return pipe(
-      this.displayFormat,
+      this.#displayFormat,
       O.getOrElseW(() => null),
     );
   }
@@ -127,7 +125,7 @@ export class DateField {
 
   public getEgressFormat(): Nullable<string> {
     return pipe(
-      this.egressFormat,
+      this.#egressFormat,
       O.getOrElseW(() => null),
     );
   }
@@ -136,10 +134,10 @@ export class DateField {
 
   private _runComputeFn(): void {
     pipe(
-      this.computeFn,
+      this.#computeFn,
       O.match(constVoid, (computeFn) => {
         pipe(
-          this._value,
+          this.#value,
           O.match(constVoid, (currentValue) => {
             const newValue = computeFn(currentValue);
             this.setValue(newValue);
@@ -153,10 +151,10 @@ export class DateField {
 
   private _runValidateFn(): void {
     pipe(
-      this.validateFn,
+      this.#validateFn,
       O.match(constVoid, (validateFn) => {
         pipe(
-          this._value,
+          this.#value,
           O.match(constVoid, (currentValue) => {
             const message = validateFn(currentValue);
 
@@ -171,12 +169,12 @@ export class DateField {
 
   private async _runValidateAsync(): Promise<void> {
     pipe(
-      this.validateFnAsync,
+      this.#validateFnAsync,
       O.match(constVoid, (validateFnAsync) => {
         pipe(
-          this._value,
+          this.#value,
           O.match(constVoid, async (currentValue) => {
-            const message = await validateFnAsync(currentValue, this._env);
+            const message = await validateFnAsync(currentValue, this.#env);
 
             if (message) {
               this._addMessage(message);
@@ -200,10 +198,10 @@ export class DateField {
 
   public getValue(): Nullable<Date> {
     return pipe(
-      this._value,
+      this.#value,
       O.getOrElse(() => {
         return pipe(
-          this.defaultValue,
+          this.#defaultValue,
           O.getOrElseW(() => null),
         );
       }),
@@ -211,18 +209,18 @@ export class DateField {
   }
 
   public setValue(value: Date): void {
-    this._value = O.some(value);
+    this.#value = O.some(value);
   }
 
   /* Messages */
 
   public getMessages(): ReadonlyArray<Message> {
-    return this._messages;
+    return this.#messages;
   }
 
   private _addMessage(message: Message): void {
-    this._messages = pipe(
-      this._messages,
+    this.#messages = pipe(
+      this.#messages,
       RA.append(message),
       RA.uniq(eqMessage),
     );
@@ -231,11 +229,11 @@ export class DateField {
   /* Env */
 
   public getEnv(): Env {
-    return this._env;
+    return this.#env;
   }
 
   public setEnv(env: Env): void {
-    this._env = env;
+    this.#env = env;
   }
 }
 
@@ -257,17 +255,17 @@ export class DateField {
  * @since 0.0.1
  */
 export class DateFieldBuilder implements Builder<DateField> {
-  private readonly label: string;
-  private description?: string;
-  private isRequired?: boolean;
-  private isReadOnly?: boolean;
-  private isUnique?: boolean;
-  private defaultValue?: Nullable<Date>;
-  private displayFormat?: string;
-  private egressFormat?: string;
-  private computeFn?: (value: Nullable<Date>) => Date;
-  private validateFn?: (value: Nullable<Date>) => void | Message;
-  private validateFnAsync?: (
+  readonly #label: string;
+  #description?: string;
+  #isRequired?: boolean;
+  #isReadOnly?: boolean;
+  #isUnique?: boolean;
+  #defaultValue?: Nullable<Date>;
+  #displayFormat?: string;
+  #egressFormat?: string;
+  #computeFn?: (value: Nullable<Date>) => Date;
+  #validateFn?: (value: Nullable<Date>) => void | Message;
+  #validateFnAsync?: (
     value: Nullable<Date>,
     env: Env,
   ) => Promise<void | Message>;
@@ -278,7 +276,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @param label
    */
   constructor(label: string) {
-    this.label = label;
+    this.#label = label;
   }
 
   /**
@@ -291,7 +289,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @since 0.0.1
    */
   withDescription(description: string): this {
-    this.description = description;
+    this.#description = description;
 
     return this;
   }
@@ -304,7 +302,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @since 0.0.1
    */
   withRequired(): this {
-    this.isRequired = true;
+    this.#isRequired = true;
 
     return this;
   }
@@ -317,7 +315,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @since 0.0.1
    */
   withReadOnly(): this {
-    this.isReadOnly = true;
+    this.#isReadOnly = true;
 
     return this;
   }
@@ -330,7 +328,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @since 0.0.1
    */
   withUnique(): this {
-    this.isUnique = true;
+    this.#isUnique = true;
 
     return this;
   }
@@ -345,7 +343,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @since 0.0.1
    */
   withDefault(value: Date): this {
-    this.defaultValue = value;
+    this.#defaultValue = value;
 
     return this;
   }
@@ -360,7 +358,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @since 0.0.1
    */
   withDisplayFormat(value: string): this {
-    this.displayFormat = value;
+    this.#displayFormat = value;
 
     return this;
   }
@@ -375,7 +373,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @since 0.0.1
    */
   withEgressFormat(value: string): this {
-    this.egressFormat = value;
+    this.#egressFormat = value;
 
     return this;
   }
@@ -390,7 +388,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @since 0.0.1
    */
   withCompute(handler: (value: Nullable<Date>) => Date): this {
-    this.computeFn = handler;
+    this.#computeFn = handler;
 
     return this;
   }
@@ -405,7 +403,7 @@ export class DateFieldBuilder implements Builder<DateField> {
    * @since 0.0.1
    */
   withValidate(handler: (value: Nullable<Date>) => void | Message): this {
-    this.validateFn = handler;
+    this.#validateFn = handler;
 
     return this;
   }
@@ -422,7 +420,7 @@ export class DateFieldBuilder implements Builder<DateField> {
   withValidateAsync(
     handler: (value: Nullable<Date>, env: Env) => Promise<void | Message>,
   ): this {
-    this.validateFnAsync = handler;
+    this.#validateFnAsync = handler;
 
     return this;
   }
@@ -436,17 +434,17 @@ export class DateFieldBuilder implements Builder<DateField> {
    */
   build(): DateField {
     return new DateField({
-      label: this.label,
-      description: this.description,
-      isRequired: this.isRequired,
-      isUnique: this.isUnique,
-      isReadOnly: this.isReadOnly,
-      defaultValue: this.defaultValue,
-      displayFormat: this.displayFormat,
-      egressFormat: this.egressFormat,
-      computeFn: this.computeFn,
-      validateFn: this.validateFn,
-      validateFnAsync: this.validateFnAsync,
+      label: this.#label,
+      description: this.#description,
+      isRequired: this.#isRequired,
+      isUnique: this.#isUnique,
+      isReadOnly: this.#isReadOnly,
+      defaultValue: this.#defaultValue,
+      displayFormat: this.#displayFormat,
+      egressFormat: this.#egressFormat,
+      computeFn: this.#computeFn,
+      validateFn: this.#validateFn,
+      validateFnAsync: this.#validateFnAsync,
     });
   }
 }

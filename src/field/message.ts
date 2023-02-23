@@ -1,8 +1,8 @@
 type Severity = "info" | "warn" | "error";
 
 export class Message {
-  private readonly severity: Severity;
-  private readonly content: string;
+  readonly #severity: Severity;
+  readonly #content: string;
 
   /**
    * Creates a visual annotation in the UI table for the user to see.
@@ -11,8 +11,8 @@ export class Message {
    * @param message string
    */
   constructor(severity: Severity, message: string) {
-    this.severity = severity;
-    this.content = message;
+    this.#severity = severity;
+    this.#content = message;
   }
 
   /**
@@ -23,7 +23,7 @@ export class Message {
    * @since 0.0.1
    */
   public getSeverity(): Severity {
-    return this.severity;
+    return this.#severity;
   }
 
   /**
@@ -34,6 +34,6 @@ export class Message {
    * @since 0.0.1
    */
   public getContent(): string {
-    return this.content;
+    return this.#content;
   }
 }
