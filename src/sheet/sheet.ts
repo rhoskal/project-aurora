@@ -129,6 +129,8 @@ export class SheetBuilder<T = never> {
   /**
    * Run computations on all records in the Sheet.
    *
+   * @param handler
+   *
    * @returns this
    *
    * @since 0.0.1
@@ -147,6 +149,8 @@ export class SheetBuilder<T = never> {
 
   /**
    * Configure a custom action.
+   *
+   * @param handler
    *
    * @returns this
    *
