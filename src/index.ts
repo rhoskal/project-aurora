@@ -146,8 +146,7 @@ const contactsSheet = new SheetBuilder("Contacts")
   //     return record;
   //   });
   // })
-  // .withAction((event) => {})
-  // .withAction("records:updated", (event) => {})
+  .withAction(["records:created", "records:updated"], (event) => {})
   // .withComputedField("age", ["dob"], age);
   .build();
 

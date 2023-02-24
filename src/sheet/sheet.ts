@@ -18,6 +18,31 @@ type Field<T> =
 
 interface Env {}
 
+type EventTopic =
+  | "action:triggered"
+  | "file:deleted"
+  | "job:completed"
+  | "job:deleted"
+  | "job:failed"
+  | "job:started"
+  | "job:updated"
+  | "job:waiting"
+  | "records:created"
+  | "records:deleted"
+  | "records:updated"
+  | "sheet:validated"
+  | "space:added"
+  | "space:removed"
+  | "upload:completed"
+  | "upload:failed"
+  | "upload:started"
+  | "user:added"
+  | "user:offline"
+  | "user:online"
+  | "user:removed"
+  | "workbook:added"
+  | "workbook:removed";
+
 export class Sheet<T = never> {
   private readonly displayName: string;
   private readonly fields: Map<string, Field<T extends infer F ? F : never>>;
@@ -156,9 +181,10 @@ export class SheetBuilder<T = never> {
    *
    * @since 0.0.1
    */
-  withAction(handler: (event: unknown) => void): this {
-    // this.sheet.addAction(handler);
-
+  withAction(
+    topics: ReadonlyArray<EventTopic>,
+    handler: (event: unknown) => void,
+  ): this {
     return this;
   }
 
