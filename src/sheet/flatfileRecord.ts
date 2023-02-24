@@ -5,8 +5,8 @@ import { pipe } from "fp-ts/function";
 import { Message } from "../field/message";
 import * as G from "../helpers/typeGuards";
 
-type Key<O> = keyof O;
-type Value<O> = O[keyof O];
+type KeyOf<O> = keyof O;
+type ValueOf<O> = O[keyof O];
 
 const eqMessage: Eq.Eq<Message> = {
   equals: (m1, m2) =>
@@ -23,15 +23,15 @@ export class FFRecord<O extends object = {}> {
     this.#messages = [];
   }
 
-  get(key: Key<O>): Value<O> {
+  get(key: KeyOf<O>): ValueOf<O> {
     return this.#value[key];
   }
 
-  set(key: Key<O>, value: Value<O>): void {
+  set(key: KeyOf<O>, value: ValueOf<O>): void {
     this.#value[key] = value;
   }
 
-  public addMessage(key: Key<O>, message: Message): void {
+  public addMessage(key: KeyOf<O>, message: Message): void {
     this.#messages = pipe(
       this.#messages,
       RA.append(message),
@@ -45,15 +45,15 @@ export class FFRecord<O extends object = {}> {
 }
 
 export interface FlatfileRecord<O extends object = {}> {
-  get(key: Key<O>): Value<O>;
-  set(key: Key<O>, value: Value<O>): this;
-  modify(key: Key<O>, handler: (value: Value<O>) => typeof value): this;
-  addInfo(key: Key<O>, message: string): this;
-  addInfo(keys: ReadonlyArray<Key<O>>, message: string): this;
-  addWarning(key: Key<O>, message: string): this;
-  addWarning(keys: ReadonlyArray<Key<O>>, message: string): this;
-  addError(key: Key<O>, message: string): this;
-  addError(keys: ReadonlyArray<Key<O>>, message: string): this;
+  get(key: KeyOf<O>): ValueOf<O>;
+  set(key: KeyOf<O>, value: ValueOf<O>): this;
+  modify(key: KeyOf<O>, handler: (value: ValueOf<O>) => typeof value): this;
+  addInfo(key: KeyOf<O>, message: string): this;
+  addInfo(keys: ReadonlyArray<KeyOf<O>>, message: string): this;
+  addWarning(key: KeyOf<O>, message: string): this;
+  addWarning(keys: ReadonlyArray<KeyOf<O>>, message: string): this;
+  addError(key: KeyOf<O>, message: string): this;
+  addError(keys: ReadonlyArray<KeyOf<O>>, message: string): this;
 }
 
 export class FlatfileRecordBuilder<O extends object>
@@ -71,7 +71,7 @@ export class FlatfileRecordBuilder<O extends object>
    * @param {string} key
    * @returns unknown
    */
-  get(key: Key<O>): Value<O> {
+  get(key: KeyOf<O>): ValueOf<O> {
     return this.#flatfileRecord.get(key);
   }
 
@@ -82,7 +82,7 @@ export class FlatfileRecordBuilder<O extends object>
    * @param {(string|number|object)} value
    * @returns this
    */
-  set(key: Key<O>, value: Value<O>): this {
+  set(key: KeyOf<O>, value: ValueOf<O>): this {
     this.#flatfileRecord.set(key, value);
 
     return this;
@@ -95,7 +95,7 @@ export class FlatfileRecordBuilder<O extends object>
    * @param {function} handler
    * @returns this
    */
-  modify(key: Key<O>, handler: (value: Value<O>) => typeof value): this {
+  modify(key: KeyOf<O>, handler: (value: ValueOf<O>) => typeof value): this {
     const currentValue = this.#flatfileRecord.get(key);
     this.#flatfileRecord.set(key, handler(currentValue));
 
@@ -108,17 +108,17 @@ export class FlatfileRecordBuilder<O extends object>
    * @param {(string|string[])} key
    * @param {string} message
    */
-  addInfo(key: Key<O>, message: string): this;
-  addInfo(keys: ReadonlyArray<Key<O>>, message: string): this;
+  addInfo(key: KeyOf<O>, message: string): this;
+  addInfo(keys: ReadonlyArray<KeyOf<O>>, message: string): this;
   addInfo(keys: unknown, message: string): this {
-    if (G.isArray<Key<O>>(keys)) {
+    if (G.isArray<KeyOf<O>>(keys)) {
       const msg = new Message("info", message);
 
       keys.map((k) => this.#flatfileRecord.addMessage(k, msg));
     } else {
       const msg = new Message("info", message);
 
-      this.#flatfileRecord.addMessage(keys as Key<O>, msg);
+      this.#flatfileRecord.addMessage(keys as KeyOf<O>, msg);
     }
 
     return this;
@@ -130,17 +130,17 @@ export class FlatfileRecordBuilder<O extends object>
    * @param {(string|string[])} key
    * @param {string} message
    */
-  addWarning(key: Key<O>, message: string): this;
-  addWarning(keys: ReadonlyArray<Key<O>>, message: string): this;
+  addWarning(key: KeyOf<O>, message: string): this;
+  addWarning(keys: ReadonlyArray<KeyOf<O>>, message: string): this;
   addWarning(keys: unknown, message: string): this {
-    if (G.isArray<Key<O>>(keys)) {
+    if (G.isArray<KeyOf<O>>(keys)) {
       const msg = new Message("warn", message);
 
       keys.map((k) => this.#flatfileRecord.addMessage(k, msg));
     } else {
       const msg = new Message("warn", message);
 
-      this.#flatfileRecord.addMessage(keys as Key<O>, msg);
+      this.#flatfileRecord.addMessage(keys as KeyOf<O>, msg);
     }
 
     return this;
@@ -152,17 +152,17 @@ export class FlatfileRecordBuilder<O extends object>
    * @param {(string|string[])} key
    * @param {string} message
    */
-  addError(key: Key<O>, message: string): this;
-  addError(keys: ReadonlyArray<Key<O>>, message: string): this;
+  addError(key: KeyOf<O>, message: string): this;
+  addError(keys: ReadonlyArray<KeyOf<O>>, message: string): this;
   addError(keys: unknown, message: string): this {
-    if (G.isArray<Key<O>>(keys)) {
+    if (G.isArray<KeyOf<O>>(keys)) {
       const msg = new Message("error", message);
 
       keys.map((k) => this.#flatfileRecord.addMessage(k, msg));
     } else {
       const msg = new Message("error", message);
 
-      this.#flatfileRecord.addMessage(keys as Key<O>, msg);
+      this.#flatfileRecord.addMessage(keys as KeyOf<O>, msg);
     }
 
     return this;
