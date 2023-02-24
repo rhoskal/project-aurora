@@ -5,7 +5,7 @@ import { pipe } from "fp-ts/function";
 import * as Str from "fp-ts/string";
 
 import * as G from "../helpers/typeGuards";
-import { Builder } from "./builder";
+import { IBuilder } from "./builder";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
@@ -18,6 +18,19 @@ const eqMessage: Eq.Eq<Message> = {
     Str.Eq.equals(m1.getContent(), m2.getContent()),
 };
 
+/**
+ * Build a ReferenceField.
+ *
+ * @example
+ * import { ReferenceField } from "@";
+ *
+ * const companyReference = new ReferenceField.Builder("Company Name")
+ *   .withDescription("Tenant company name")
+ *   .withCardinality("has-one")
+ *   .build();
+ *
+ * @since 0.0.1
+ */
 export class ReferenceField {
   readonly #label: string;
   readonly #description: string;
@@ -28,7 +41,7 @@ export class ReferenceField {
   #messages: ReadonlyArray<Message>;
   #env: Env;
 
-  constructor(params: {
+  private constructor(params: {
     label: string;
     description?: string;
     isRequired?: boolean;
@@ -112,99 +125,92 @@ export class ReferenceField {
   public setEnv(env: Env): void {
     this.#env = env;
   }
-}
 
-/**
- * Builder class for a ReferenceField.
- *
- * @example
- * import { ReferenceFieldBuilder } from "@";
- *
- * const companyReference = new ReferenceFieldBuilder("Company Name")
- *   .withDescription("Tenant company name")
- *   .withCardinality("has-one")
- *   .build();
- *
- * @since 0.0.1
- */
-export class ReferenceFieldBuilder implements Builder<ReferenceField> {
-  readonly #label: string;
-  #description?: string;
-  #isRequired?: boolean;
-  #cardinality?: Cardinality;
+  //---------------------------------------
+  // Builder
+  //---------------------------------------
 
-  /**
-   * Creates a simple, empty ReferenceField.
-   *
-   * @param label
-   * @param cardinality
-   */
-  constructor(label: string) {
-    this.#label = label;
-  }
+  static Builder = class ReferenceFieldBuilder
+    implements IBuilder<ReferenceField>
+  {
+    readonly #label: string;
+    #description?: string;
+    #isRequired?: boolean;
+    #cardinality?: Cardinality;
 
-  /**
-   * Sets the value in the UI table the user will see when they hover their mouse over the column header.
-   *
-   * @param description - Visible on hover of column header.
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withDescription(description: string): this {
-    this.#description = description;
-
-    return this;
-  }
-
-  /**
-   * Ensures a field must have a value otherwise an error message will be present.
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withRequired(): this {
-    this.#isRequired = true;
-
-    return this;
-  }
-
-  /**
-   * Sets the cardinality.
-   *
-   * @param cardinality
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withCardinality(cardinality: Cardinality): this {
-    this.#cardinality = cardinality;
-
-    return this;
-  }
-
-  /**
-   * Final call to return an instantiated ReferenceField.
-   *
-   * @returns ReferenceField
-   *
-   * @since 0.0.1
-   */
-  build(): never | ReferenceField {
-    if (G.isUndefined(this.#cardinality)) {
-      throw new Error(
-        "You must specify a cardinality with `withCardinality()`",
-      );
+    /**
+     * Creates a simple, empty ReferenceField.
+     *
+     * @param label
+     * @param cardinality
+     */
+    constructor(label: string) {
+      this.#label = label;
     }
 
-    return new ReferenceField({
-      label: this.#label,
-      description: this.#description,
-      isRequired: this.#isRequired,
-      cardinality: this.#cardinality,
-    });
-  }
+    /**
+     * Sets the value in the UI table the user will see when they hover their mouse over the column header.
+     *
+     * @param description - Visible on hover of column header.
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withDescription(description: string): this {
+      this.#description = description;
+
+      return this;
+    }
+
+    /**
+     * Ensures a field must have a value otherwise an error message will be present.
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withRequired(): this {
+      this.#isRequired = true;
+
+      return this;
+    }
+
+    /**
+     * Sets the cardinality.
+     *
+     * @param cardinality
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withCardinality(cardinality: Cardinality): this {
+      this.#cardinality = cardinality;
+
+      return this;
+    }
+
+    /**
+     * Final call to return an instantiated ReferenceField.
+     *
+     * @returns ReferenceField
+     *
+     * @since 0.0.1
+     */
+    build(): never | ReferenceField {
+      if (G.isUndefined(this.#cardinality)) {
+        throw new Error(
+          "You must specify a cardinality with `withCardinality()`",
+        );
+      }
+
+      return new ReferenceField({
+        label: this.#label,
+        description: this.#description,
+        isRequired: this.#isRequired,
+        cardinality: this.#cardinality,
+      });
+    }
+  };
 }

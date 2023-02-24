@@ -43,9 +43,20 @@ type EventTopic =
   | "workbook:added"
   | "workbook:removed";
 
-export class Sheet<T = never> {
+/**
+ * Build a Sheet.
+ *
+ * @example
+ * import { TextField, Sheet } from "@";
+ *
+ * const textField = new TextField.Builder("Foo").build();
+ * const sheet = new Sheet.Builder("Bar").withField("foo", textField).build();
+ *
+ * @since 0.0.1
+ */
+export class Sheet {
   readonly #displayName: string;
-  readonly #fields: Map<string, Field<T extends infer F ? F : never>>;
+  readonly #fields: Map<string, Field<unknown extends infer F ? F : never>>;
   readonly #computeFn: O.Option<
     (opts: {
       records: ReadonlyArray<FlatfileRecord>;
@@ -59,7 +70,7 @@ export class Sheet<T = never> {
 
   constructor(params: {
     displayName: string;
-    fields: Map<string, Field<T extends infer F ? F : never>>;
+    fields: Map<string, Field<unknown extends infer F ? F : never>>;
     computeFn?: (opts: {
       records: ReadonlyArray<FlatfileRecord>;
       env: Env;
@@ -103,107 +114,100 @@ export class Sheet<T = never> {
   public run(): void {
     this._runComputeFn();
   }
-}
 
-/**
- * Builder class for a Sheet.
- *
- * @example
- * import { TextFieldBuilder, SheetBuilder } from "@";
- *
- * const textField = new TextFieldBuilder("Foo").build();
- * const sheet = new SheetBuilder("Bar").withField("foo", textField).build();
- *
- * @since 0.0.1
- */
-export class SheetBuilder<T = never> {
-  readonly #displayName: string;
-  #fields: Map<string, Field<T extends infer F ? F : never>>;
-  #computeFn?: (opts: {
-    records: ReadonlyArray<FlatfileRecord>;
-    env: Env;
-    logger: Logger;
-  }) => void;
+  //---------------------------------------
+  // Builder
+  //---------------------------------------
 
-  /**
-   * Creates a simple, empty Sheet.
-   *
-   * @param label
-   */
-  constructor(displayName: string) {
-    this.#displayName = displayName;
-    this.#fields = new Map();
-  }
-
-  /**
-   * Adds a field to the Sheet.
-   *
-   * @param key - internal key
-   * @param field - field type class instantiation
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withField(key: string, field: Field<any>): this {
-    this.#fields = this.#fields.set(key, field);
-
-    return this;
-  }
-
-  /**
-   * Run computations on all records in the Sheet.
-   *
-   * @param handler
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withCompute(
-    handler: (opts: {
+  static Builder = class SheetBuilder {
+    readonly #displayName: string;
+    #fields: Map<string, Field<unknown extends infer F ? F : never>>;
+    #computeFn?: (opts: {
       records: ReadonlyArray<FlatfileRecord>;
       env: Env;
       logger: Logger;
-    }) => void,
-  ): this {
-    this.#computeFn = handler;
+    }) => void;
 
-    return this;
-  }
-
-  /**
-   * Configure a custom action.
-   *
-   * @param handler
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withAction(
-    topics: ReadonlyArray<EventTopic>,
-    handler: (event: unknown) => void,
-  ): this {
-    return this;
-  }
-
-  /**
-   * Final call to return an instantiated Sheet.
-   *
-   * @returns Sheet
-   *
-   * @since 0.0.1
-   */
-  build(): never | Sheet {
-    if (this.#fields.size === 0) {
-      throw new Error("A Sheet must include at least one field.");
+    /**
+     * Creates a simple, empty Sheet.
+     *
+     * @param label
+     */
+    constructor(displayName: string) {
+      this.#displayName = displayName;
+      this.#fields = new Map();
     }
 
-    return new Sheet({
-      displayName: this.#displayName,
-      fields: this.#fields,
-      computeFn: this.#computeFn,
-    });
-  }
+    /**
+     * Adds a field to the Sheet.
+     *
+     * @param key - internal key
+     * @param field - field type class instantiation
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withField(key: string, field: Field<any>): this {
+      this.#fields = this.#fields.set(key, field);
+
+      return this;
+    }
+
+    /**
+     * Run computations on all records in the Sheet.
+     *
+     * @param handler
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withCompute(
+      handler: (opts: {
+        records: ReadonlyArray<FlatfileRecord>;
+        env: Env;
+        logger: Logger;
+      }) => void,
+    ): this {
+      this.#computeFn = handler;
+
+      return this;
+    }
+
+    /**
+     * Configure a custom action.
+     *
+     * @param handler
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withAction(
+      topics: ReadonlyArray<EventTopic>,
+      handler: (event: unknown) => void,
+    ): this {
+      return this;
+    }
+
+    /**
+     * Final call to return an instantiated Sheet.
+     *
+     * @returns Sheet
+     *
+     * @since 0.0.1
+     */
+    build(): never | Sheet {
+      if (this.#fields.size === 0) {
+        throw new Error("A Sheet must include at least one field.");
+      }
+
+      return new Sheet({
+        displayName: this.#displayName,
+        fields: this.#fields,
+        computeFn: this.#computeFn,
+      });
+    }
+  };
 }

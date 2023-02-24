@@ -4,7 +4,7 @@ import * as RA from "fp-ts/ReadonlyArray";
 import { pipe, constVoid } from "fp-ts/function";
 import * as Str from "fp-ts/string";
 
-import { Builder } from "./builder";
+import { IBuilder } from "./builder";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
@@ -16,6 +16,23 @@ const eqMessage: Eq.Eq<Message> = {
     Str.Eq.equals(m1.getContent(), m2.getContent()),
 };
 
+/**
+ * Build a DateField.
+ *
+ * @example
+ * import { DateField } from "@";
+ *
+ * const dob = new DateField.Builder("Date of Birth")
+ *   .withDisplayFormat("dd/MM/yyyy")
+ *   .withValidate((value) => {
+ *     if (G.isNotNil(value) && value > new Date()) {
+ *       return new Message("error", "dob cannot be in the future");
+ *     }
+ *   })
+ *   .build();
+ *
+ * @since 0.0.1
+ */
 export class DateField {
   readonly #label: string;
   readonly #description: string;
@@ -35,7 +52,7 @@ export class DateField {
   #messages: ReadonlyArray<Message>;
   #env: Env;
 
-  constructor(params: {
+  private constructor(params: {
     label: string;
     description?: string;
     isRequired?: boolean;
@@ -235,216 +252,203 @@ export class DateField {
   public setEnv(env: Env): void {
     this.#env = env;
   }
-}
 
-/**
- * Builder class for a DateField.
- *
- * @example
- * import { DateFieldBuilder } from "@";
- *
- * const dob = new DateFieldBuilder("Date of Birth")
- *   .withDisplayFormat("dd/MM/yyyy")
- *   .withValidate((value) => {
- *     if (G.isNotNil(value) && value > new Date()) {
- *       return new Message("error", "dob cannot be in the future");
- *     }
- *   })
- *   .build();
- *
- * @since 0.0.1
- */
-export class DateFieldBuilder implements Builder<DateField> {
-  readonly #label: string;
-  #description?: string;
-  #isRequired?: boolean;
-  #isReadOnly?: boolean;
-  #isUnique?: boolean;
-  #defaultValue?: Nullable<Date>;
-  #displayFormat?: string;
-  #egressFormat?: string;
-  #computeFn?: (value: Nullable<Date>) => Date;
-  #validateFn?: (value: Nullable<Date>) => void | Message;
-  #validateFnAsync?: (
-    value: Nullable<Date>,
-    env: Env,
-  ) => Promise<void | Message>;
+  //---------------------------------------
+  // Builder
+  //---------------------------------------
 
-  /**
-   * Creates a simple, empty DateField.
-   *
-   * @param label
-   */
-  constructor(label: string) {
-    this.#label = label;
-  }
+  static Builder = class DateFieldBuilder implements IBuilder<DateField> {
+    readonly #label: string;
+    #description?: string;
+    #isRequired?: boolean;
+    #isReadOnly?: boolean;
+    #isUnique?: boolean;
+    #defaultValue?: Nullable<Date>;
+    #displayFormat?: string;
+    #egressFormat?: string;
+    #computeFn?: (value: Nullable<Date>) => Date;
+    #validateFn?: (value: Nullable<Date>) => void | Message;
+    #validateFnAsync?: (
+      value: Nullable<Date>,
+      env: Env,
+    ) => Promise<void | Message>;
 
-  /**
-   * Sets the value in the UI table the user will see when they hover their mouse over the column header.
-   *
-   * @param description - Visible on hover of column header.
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withDescription(description: string): this {
-    this.#description = description;
+    /**
+     * Creates a simple, empty DateField.
+     *
+     * @param label
+     */
+    constructor(label: string) {
+      this.#label = label;
+    }
 
-    return this;
-  }
+    /**
+     * Sets the value in the UI table the user will see when they hover their mouse over the column header.
+     *
+     * @param description - Visible on hover of column header.
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withDescription(description: string): this {
+      this.#description = description;
 
-  /**
-   * Ensures a field must have a value otherwise an error message will be present.
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withRequired(): this {
-    this.#isRequired = true;
+      return this;
+    }
 
-    return this;
-  }
+    /**
+     * Ensures a field must have a value otherwise an error message will be present.
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withRequired(): this {
+      this.#isRequired = true;
 
-  /**
-   * Ensures a user cannot edit the value.
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withReadOnly(): this {
-    this.#isReadOnly = true;
+      return this;
+    }
 
-    return this;
-  }
+    /**
+     * Ensures a user cannot edit the value.
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withReadOnly(): this {
+      this.#isReadOnly = true;
 
-  /**
-   * Ensures a value is unique in the entire column.
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withUnique(): this {
-    this.#isUnique = true;
+      return this;
+    }
 
-    return this;
-  }
+    /**
+     * Ensures a value is unique in the entire column.
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withUnique(): this {
+      this.#isUnique = true;
 
-  /**
-   * Sets a default value when none was provided by the user.
-   *
-   * @param value
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withDefault(value: Date): this {
-    this.#defaultValue = value;
+      return this;
+    }
 
-    return this;
-  }
+    /**
+     * Sets a default value when none was provided by the user.
+     *
+     * @param value
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withDefault(value: Date): this {
+      this.#defaultValue = value;
 
-  /**
-   * Format the date in the UI table but not change the underlying Date type.
-   *
-   * @param value - internal standard format string
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withDisplayFormat(value: string): this {
-    this.#displayFormat = value;
+      return this;
+    }
 
-    return this;
-  }
+    /**
+     * Format the date in the UI table but not change the underlying Date type.
+     *
+     * @param value - internal standard format string
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withDisplayFormat(value: string): this {
+      this.#displayFormat = value;
 
-  /**
-   * Format the date on data egress but not change the underlying Date type.
-   *
-   * @param value - internal standard format string
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withEgressFormat(value: string): this {
-    this.#egressFormat = value;
+      return this;
+    }
 
-    return this;
-  }
+    /**
+     * Format the date on data egress but not change the underlying Date type.
+     *
+     * @param value - internal standard format string
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withEgressFormat(value: string): this {
+      this.#egressFormat = value;
 
-  /**
-   * Change the current value into something new.
-   *
-   * @param handler
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withCompute(handler: (value: Nullable<Date>) => Date): this {
-    this.#computeFn = handler;
+      return this;
+    }
 
-    return this;
-  }
+    /**
+     * Change the current value into something new.
+     *
+     * @param handler
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withCompute(handler: (value: Nullable<Date>) => Date): this {
+      this.#computeFn = handler;
 
-  /**
-   * Validate the current value against certain conditions and display a message to the user when those conditions are not met.
-   *
-   * @param handler
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withValidate(handler: (value: Nullable<Date>) => void | Message): this {
-    this.#validateFn = handler;
+      return this;
+    }
 
-    return this;
-  }
+    /**
+     * Validate the current value against certain conditions and display a message to the user when those conditions are not met.
+     *
+     * @param handler
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withValidate(handler: (value: Nullable<Date>) => void | Message): this {
+      this.#validateFn = handler;
 
-  /**
-   * Sets the value asynchronously.
-   *
-   * @param handler
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withValidateAsync(
-    handler: (value: Nullable<Date>, env: Env) => Promise<void | Message>,
-  ): this {
-    this.#validateFnAsync = handler;
+      return this;
+    }
 
-    return this;
-  }
+    /**
+     * Sets the value asynchronously.
+     *
+     * @param handler
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withValidateAsync(
+      handler: (value: Nullable<Date>, env: Env) => Promise<void | Message>,
+    ): this {
+      this.#validateFnAsync = handler;
 
-  /**
-   * Final call to return an instantiated DateField.
-   *
-   * @returns DateField
-   *
-   * @since 0.0.1
-   */
-  build(): DateField {
-    return new DateField({
-      label: this.#label,
-      description: this.#description,
-      isRequired: this.#isRequired,
-      isUnique: this.#isUnique,
-      isReadOnly: this.#isReadOnly,
-      defaultValue: this.#defaultValue,
-      displayFormat: this.#displayFormat,
-      egressFormat: this.#egressFormat,
-      computeFn: this.#computeFn,
-      validateFn: this.#validateFn,
-      validateFnAsync: this.#validateFnAsync,
-    });
-  }
+      return this;
+    }
+
+    /**
+     * Final call to return an instantiated DateField.
+     *
+     * @returns DateField
+     *
+     * @since 0.0.1
+     */
+    build(): DateField {
+      return new DateField({
+        label: this.#label,
+        description: this.#description,
+        isRequired: this.#isRequired,
+        isUnique: this.#isUnique,
+        isReadOnly: this.#isReadOnly,
+        defaultValue: this.#defaultValue,
+        displayFormat: this.#displayFormat,
+        egressFormat: this.#egressFormat,
+        computeFn: this.#computeFn,
+        validateFn: this.#validateFn,
+        validateFnAsync: this.#validateFnAsync,
+      });
+    }
+  };
 }

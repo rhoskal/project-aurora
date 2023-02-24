@@ -5,7 +5,7 @@ import { pipe, constVoid } from "fp-ts/function";
 import * as Str from "fp-ts/string";
 
 import * as G from "../helpers/typeGuards";
-import { Builder } from "./builder";
+import { IBuilder } from "./builder";
 import { Message } from "./message";
 
 type Nullable<T> = null | T;
@@ -17,6 +17,20 @@ const eqMessage: Eq.Eq<Message> = {
     Str.Eq.equals(m1.getContent(), m2.getContent()),
 };
 
+/**
+ * Build a OptionField.
+ *
+ * @example
+ * import { OptionField } from "@";
+ *
+ * const state = new OptionField.Builder("State")
+ *   .withChoices({
+ *     colorado: "Colorado",
+ *   })
+ *   .build();
+ *
+ * @since 0.0.1
+ */
 export class OptionField {
   readonly #label: string;
   readonly #description: string;
@@ -30,7 +44,7 @@ export class OptionField {
   #messages: ReadonlyArray<Message>;
   #env: Env;
 
-  constructor(params: {
+  private constructor(params: {
     label: string;
     description?: string;
     isRequired?: boolean;
@@ -137,124 +151,116 @@ export class OptionField {
   public setEnv(env: Env): void {
     this.#env = env;
   }
-}
 
-/**
- * Builder class for a OptionField.
- *
- * @example
- * import { OptionFieldBuilder } from "@";
- *
- * const state = new OptionFieldBuilder("State")
- *   .withChoices({
- *     colorado: "Colorado",
- *   })
- *   .build();
- *
- * @since 0.0.1
- */
-export class OptionFieldBuilder implements Builder<OptionField> {
-  readonly #label: string;
-  #description?: string;
-  #isRequired?: boolean;
-  #choices?: Record<string, unknown>;
-  #choicesFnAsync?: (env: Env) => Promise<Record<string, unknown>>;
+  //---------------------------------------
+  // Builder
+  //---------------------------------------
 
-  /**
-   * Creates a simple, empty OptionField.
-   *
-   * @param label
-   */
-  constructor(label: string) {
-    this.#label = label;
-  }
+  static Builder = class OptionFieldFieldBuilder
+    implements IBuilder<OptionField>
+  {
+    readonly #label: string;
+    #description?: string;
+    #isRequired?: boolean;
+    #choices?: Record<string, unknown>;
+    #choicesFnAsync?: (env: Env) => Promise<Record<string, unknown>>;
 
-  /**
-   * Sets the value in the UI table the user will see when they hover their mouse over the column header.
-   *
-   * @param {string} description - Visible on hover of column header.
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withDescription(description: string): this {
-    this.#description = description;
-
-    return this;
-  }
-
-  /**
-   * Ensures a field must have a value otherwise an error message will be present.
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withRequired(): this {
-    this.#isRequired = true;
-
-    return this;
-  }
-
-  /**
-   * Sets the choice synchronously.
-   *
-   * @param choices
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withChoices(choices: Record<string, unknown>): this {
-    this.#choices = choices;
-
-    return this;
-  }
-
-  /**
-   * Sets the choice asynchronously.
-   *
-   * @callback handler
-   *
-   * @returns this
-   *
-   * @since 0.0.1
-   */
-  withChoicesAsync(
-    handler: (env: Env) => Promise<Record<string, unknown>>,
-  ): this {
-    this.#choicesFnAsync = handler;
-
-    return this;
-  }
-
-  /**
-   * Final call to return an instantiated OptionField.
-   *
-   * @returns OptionField
-   *
-   * @since 0.0.1
-   */
-  build(): never | OptionField {
-    if (G.isUndefined(this.#choices) && G.isUndefined(this.#choicesFnAsync)) {
-      throw Error(
-        "Either `withChoices()` or `withChoicesAsync()` must be present.",
-      );
+    /**
+     * Creates a simple, empty OptionField.
+     *
+     * @param label
+     */
+    constructor(label: string) {
+      this.#label = label;
     }
 
-    if (G.isNotNil(this.#choices) && G.isNotNil(this.#choicesFnAsync)) {
-      throw Error(
-        "Please choose either `withChoices()` or `withChoicesAsync()` since both are present.",
-      );
+    /**
+     * Sets the value in the UI table the user will see when they hover their mouse over the column header.
+     *
+     * @param {string} description - Visible on hover of column header.
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withDescription(description: string): this {
+      this.#description = description;
+
+      return this;
     }
 
-    return new OptionField({
-      label: this.#label,
-      description: this.#description,
-      isRequired: this.#isRequired,
-      choices: this.#choices,
-      choicesFnAsync: this.#choicesFnAsync,
-    });
-  }
+    /**
+     * Ensures a field must have a value otherwise an error message will be present.
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withRequired(): this {
+      this.#isRequired = true;
+
+      return this;
+    }
+
+    /**
+     * Sets the choice synchronously.
+     *
+     * @param choices
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withChoices(choices: Record<string, unknown>): this {
+      this.#choices = choices;
+
+      return this;
+    }
+
+    /**
+     * Sets the choice asynchronously.
+     *
+     * @callback handler
+     *
+     * @returns this
+     *
+     * @since 0.0.1
+     */
+    withChoicesAsync(
+      handler: (env: Env) => Promise<Record<string, unknown>>,
+    ): this {
+      this.#choicesFnAsync = handler;
+
+      return this;
+    }
+
+    /**
+     * Final call to return an instantiated OptionField.
+     *
+     * @returns OptionField
+     *
+     * @since 0.0.1
+     */
+    build(): never | OptionField {
+      if (G.isUndefined(this.#choices) && G.isUndefined(this.#choicesFnAsync)) {
+        throw Error(
+          "Either `withChoices()` or `withChoicesAsync()` must be present.",
+        );
+      }
+
+      if (G.isNotNil(this.#choices) && G.isNotNil(this.#choicesFnAsync)) {
+        throw Error(
+          "Please choose either `withChoices()` or `withChoicesAsync()` since both are present.",
+        );
+      }
+
+      return new OptionField({
+        label: this.#label,
+        description: this.#description,
+        isRequired: this.#isRequired,
+        choices: this.#choices,
+        choicesFnAsync: this.#choicesFnAsync,
+      });
+    }
+  };
 }

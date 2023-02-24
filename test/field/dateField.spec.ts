@@ -1,4 +1,4 @@
-import { DateFieldBuilder } from "../../src/field/dateField";
+import { DateField } from "../../src/field/dateField";
 import { Message } from "../../src/field/message";
 import * as G from "../../src/helpers/typeGuards";
 
@@ -14,7 +14,7 @@ const getTomorrow = (): Date => {
 
 describe("DateField", () => {
   it("should handle simple creation", () => {
-    const textField = new DateFieldBuilder("Foo").build();
+    const textField = new DateField.Builder("Foo").build();
 
     expect(textField.getLabel()).toBe("Foo");
     expect(textField.getDescription()).toBe("");
@@ -28,7 +28,7 @@ describe("DateField", () => {
   });
 
   it("should handle setting a description", () => {
-    const dateField = new DateFieldBuilder("Foo")
+    const dateField = new DateField.Builder("Foo")
       .withDescription("Some description")
       .build();
 
@@ -39,7 +39,7 @@ describe("DateField", () => {
   });
 
   it("should handle marking as required", () => {
-    const dateField = new DateFieldBuilder("Foo").withRequired().build();
+    const dateField = new DateField.Builder("Foo").withRequired().build();
 
     const actual: boolean = dateField.getIsRequired();
     const expected: boolean = true;
@@ -48,7 +48,7 @@ describe("DateField", () => {
   });
 
   it("should handle marking as read-only", () => {
-    const dateField = new DateFieldBuilder("Foo").withReadOnly().build();
+    const dateField = new DateField.Builder("Foo").withReadOnly().build();
 
     const actual: boolean = dateField.getIsReadOnly();
     const expected: boolean = true;
@@ -57,7 +57,7 @@ describe("DateField", () => {
   });
 
   it("should handle marking as unique", () => {
-    const dateField = new DateFieldBuilder("Foo").withUnique().build();
+    const dateField = new DateField.Builder("Foo").withUnique().build();
 
     const actual: boolean = dateField.getIsUnique();
     const expected: boolean = true;
@@ -66,7 +66,7 @@ describe("DateField", () => {
   });
 
   it("should handle setting display format", () => {
-    const dateField = new DateFieldBuilder("Foo")
+    const dateField = new DateField.Builder("Foo")
       .withDisplayFormat("MM-dd-YYYY")
       .build();
 
@@ -77,7 +77,7 @@ describe("DateField", () => {
   });
 
   it("should handle setting egress format", () => {
-    const dateField = new DateFieldBuilder("Foo")
+    const dateField = new DateField.Builder("Foo")
       .withEgressFormat("MM-dd-YYYY")
       .build();
 
@@ -90,7 +90,7 @@ describe("DateField", () => {
   it("should handle a compute fn", () => {});
 
   //   it("should handle a validate fn", () => {
-  //     const dateField = new DateFieldBuilder("Foo")
+  //     const dateField = new DateField.Builder("Foo")
   //       .withValidate((value) => {
   //         if (G.isNotNil(value) && value > new Date()) {
   //           return new Message("error", "Foo cannot be in the future");

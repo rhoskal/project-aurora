@@ -1,4 +1,4 @@
-import { NumberFieldBuilder } from "../../src/field/numberField";
+import { NumberField } from "../../src/field/numberField";
 import { Message } from "../../src/field/message";
 import * as G from "../../src/helpers/typeGuards";
 
@@ -6,7 +6,7 @@ type Nullable<T> = null | T;
 
 describe("NumberField", () => {
   it("should handle simple creation", () => {
-    const numberField = new NumberFieldBuilder("Foo").build();
+    const numberField = new NumberField.Builder("Foo").build();
 
     expect(numberField.getLabel()).toBe("Foo");
     expect(numberField.getDescription()).toBe("");
@@ -18,7 +18,7 @@ describe("NumberField", () => {
   });
 
   it("should handle setting a description", () => {
-    const numberField = new NumberFieldBuilder("Foo")
+    const numberField = new NumberField.Builder("Foo")
       .withDescription("Some description")
       .build();
 
@@ -29,7 +29,7 @@ describe("NumberField", () => {
   });
 
   it("should handle marking as required", () => {
-    const numberField = new NumberFieldBuilder("Foo").withRequired().build();
+    const numberField = new NumberField.Builder("Foo").withRequired().build();
 
     const actual: boolean = numberField.getIsRequired();
     const expected: boolean = true;
@@ -38,7 +38,7 @@ describe("NumberField", () => {
   });
 
   it("should handle marking as read-only", () => {
-    const numberField = new NumberFieldBuilder("Foo").withReadOnly().build();
+    const numberField = new NumberField.Builder("Foo").withReadOnly().build();
 
     const actual: boolean = numberField.getIsReadOnly();
     const expected: boolean = true;
@@ -47,7 +47,7 @@ describe("NumberField", () => {
   });
 
   it("should handle marking as unique", () => {
-    const numberField = new NumberFieldBuilder("Foo").withUnique().build();
+    const numberField = new NumberField.Builder("Foo").withUnique().build();
 
     const actual: boolean = numberField.getIsUnique();
     const expected: boolean = true;
@@ -56,7 +56,7 @@ describe("NumberField", () => {
   });
 
   it("should handle using a default value", () => {
-    const numberField = new NumberFieldBuilder("Foo").withDefault(42).build();
+    const numberField = new NumberField.Builder("Foo").withDefault(42).build();
 
     const actual: Nullable<number> = numberField.getValue();
     const expected: number = 42;
@@ -65,7 +65,7 @@ describe("NumberField", () => {
   });
 
   it("should handle a compute fn", () => {
-    const numberField = new NumberFieldBuilder("Foo")
+    const numberField = new NumberField.Builder("Foo")
       .withCompute((value) => {
         if (G.isNotNil(value)) {
           return value * 10;
@@ -85,7 +85,7 @@ describe("NumberField", () => {
   });
 
   it("should handle a validate fn", () => {
-    const numberField = new NumberFieldBuilder("Salary")
+    const numberField = new NumberField.Builder("Salary")
       .withValidate((value) => {
         if (G.isNotNil(value) && value < 0) {
           return new Message("warn", "Salary cannot be negative");

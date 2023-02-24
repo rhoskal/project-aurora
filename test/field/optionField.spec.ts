@@ -1,4 +1,4 @@
-import { OptionFieldBuilder } from "../../src/field/optionField";
+import { OptionField } from "../../src/field/optionField";
 
 type Nullable<T> = null | T;
 
@@ -8,7 +8,7 @@ describe("OptionField", () => {
       colorado: "Colorado",
     };
 
-    const optionField = new OptionFieldBuilder("Foo")
+    const optionField = new OptionField.Builder("Foo")
       .withChoices(choices)
       .build();
 
@@ -24,7 +24,7 @@ describe("OptionField", () => {
       colorado: "Colorado",
     };
 
-    const optionField = new OptionFieldBuilder("Foo")
+    const optionField = new OptionField.Builder("Foo")
       .withDescription("Some description")
       .withChoices(choices)
       .build();
@@ -40,7 +40,7 @@ describe("OptionField", () => {
       colorado: "Colorado",
     };
 
-    const optionField = new OptionFieldBuilder("Foo")
+    const optionField = new OptionField.Builder("Foo")
       .withRequired()
       .withChoices(choices)
       .build();
@@ -56,7 +56,7 @@ describe("OptionField", () => {
       colorado: "Colorado",
     };
 
-    const optionField = new OptionFieldBuilder("State")
+    const optionField = new OptionField.Builder("State")
       .withChoices(choices)
       .build();
 
@@ -75,7 +75,7 @@ describe("OptionField", () => {
   //       colorado: "Colorado",
   //     };
   //
-  //     const optionField = new OptionFieldBuilder("State")
+  //     const optionField = new OptionField.Builder("State")
   //       .withChoicesAsync((_env) => Promise.resolve(choices))
   //       .build();
   //
@@ -92,7 +92,7 @@ describe("OptionField", () => {
 
   it("should handle creation attempt with no choices set", () => {
     expect(() => {
-      new OptionFieldBuilder("Foo").build();
+      new OptionField.Builder("Foo").build();
     }).toThrowError(
       Error("Either `withChoices()` or `withChoicesAsync()` must be present."),
     );
@@ -104,7 +104,7 @@ describe("OptionField", () => {
         colorado: "Colorado",
       };
 
-      new OptionFieldBuilder("State")
+      new OptionField.Builder("State")
         .withChoices(choices)
         .withChoicesAsync((_env) => Promise.resolve(choices))
         .build();

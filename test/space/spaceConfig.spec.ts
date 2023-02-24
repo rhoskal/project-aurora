@@ -1,14 +1,14 @@
-import { TextFieldBuilder } from "../../src/field/textField";
-import { SheetBuilder } from "../../src/sheet/sheet";
-import { WorkbookBuilder } from "../../src/workbook/workbook";
-import { SpaceConfigBuilder } from "../../src/space/spaceConfig";
+import { TextField } from "../../src/field/textField";
+import { Sheet } from "../../src/sheet/sheet";
+import { Workbook } from "../../src/workbook/workbook";
+import { SpaceConfig } from "../../src/space/spaceConfig";
 
 describe("SpaceConfig", () => {
   it("should handle simple creation", () => {
-    const textField = new TextFieldBuilder("Foo").build();
-    const sheet = new SheetBuilder("Bar").withField("foo", textField).build();
-    const workbook = new WorkbookBuilder("Baz").withSheet(sheet).build();
-    const spaceConfig = new SpaceConfigBuilder("X")
+    const textField = new TextField.Builder("Foo").build();
+    const sheet = new Sheet.Builder("Bar").withField("foo", textField).build();
+    const workbook = new Workbook.Builder("Baz").withSheet(sheet).build();
+    const spaceConfig = new SpaceConfig.Builder("X")
       .withWorkbook(workbook)
       .build();
 
@@ -18,7 +18,7 @@ describe("SpaceConfig", () => {
 
   it("should handle creation with no workbooks", () => {
     expect(() => {
-      new SpaceConfigBuilder("X").build();
+      new SpaceConfig.Builder("X").build();
     }).toThrowError(Error("A Space Config must include at least 1 Workbook."));
   });
 });

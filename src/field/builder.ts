@@ -3,7 +3,7 @@ import { Message } from "./message";
 type Nullable<T> = null | T;
 type Env = Record<string, unknown>;
 
-export interface Builder<T> {
+export interface IBuilder<T> {
   withDescription(description: string): this;
   withRequired(): this;
   withVirtual?(): this;

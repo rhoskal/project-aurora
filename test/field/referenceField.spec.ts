@@ -1,8 +1,8 @@
-import { ReferenceFieldBuilder } from "../../src/field/referenceField";
+import { ReferenceField } from "../../src/field/referenceField";
 
 describe("ReferenceField", () => {
   it("should handle simple creation", () => {
-    const referenceField = new ReferenceFieldBuilder("Foo").withCardinality("has-one").build();
+    const referenceField = new ReferenceField.Builder("Foo").withCardinality("has-one").build();
 
     expect(referenceField.getLabel()).toBe("Foo");
     expect(referenceField.getDescription()).toBe("");
@@ -11,7 +11,7 @@ describe("ReferenceField", () => {
   });
 
   it("should handle setting a description", () => {
-    const referenceField = new ReferenceFieldBuilder("Foo")
+    const referenceField = new ReferenceField.Builder("Foo")
       .withDescription("Some description")
       .withCardinality("has-one")
       .build();
@@ -23,7 +23,7 @@ describe("ReferenceField", () => {
   });
 
   it("should handle marking as required", () => {
-    const referenceField = new ReferenceFieldBuilder("Foo")
+    const referenceField = new ReferenceField.Builder("Foo")
       .withRequired()
       .withCardinality("has-one")
       .build();

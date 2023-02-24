@@ -1,10 +1,10 @@
-import { ArrayFieldBuilder } from "../../src/field/arrayField";
+import { ArrayField } from "../../src/field/arrayField";
 import { Message } from "../../src/field/message";
 import * as G from "../../src/helpers/typeGuards";
 
 describe("ArrayField", () => {
   it("should handle simple creation", () => {
-    const arrayField = new ArrayFieldBuilder("Foo").build();
+    const arrayField = new ArrayField.Builder("Foo").build();
 
     expect(arrayField.getLabel()).toBe("Foo");
     expect(arrayField.getDescription()).toBe("");
@@ -16,7 +16,7 @@ describe("ArrayField", () => {
   });
 
   it("should handle setting a description", () => {
-    const arrayField = new ArrayFieldBuilder("Foo")
+    const arrayField = new ArrayField.Builder("Foo")
       .withDescription("Some description")
       .build();
 
@@ -27,7 +27,7 @@ describe("ArrayField", () => {
   });
 
   it("should handle marking as required", () => {
-    const arrayField = new ArrayFieldBuilder("Foo").withRequired().build();
+    const arrayField = new ArrayField.Builder("Foo").withRequired().build();
 
     const actual: boolean = arrayField.getIsRequired();
     const expected: boolean = true;
@@ -36,7 +36,7 @@ describe("ArrayField", () => {
   });
 
   it("should handle marking as read-only", () => {
-    const arrayField = new ArrayFieldBuilder("Foo").withReadOnly().build();
+    const arrayField = new ArrayField.Builder("Foo").withReadOnly().build();
 
     const actual: boolean = arrayField.getIsReadOnly();
     const expected: boolean = true;
@@ -45,7 +45,7 @@ describe("ArrayField", () => {
   });
 
   it("should handle marking as unique", () => {
-    const arrayField = new ArrayFieldBuilder("Foo").withUnique().build();
+    const arrayField = new ArrayField.Builder("Foo").withUnique().build();
 
     const actual: boolean = arrayField.getIsUnique();
     const expected: boolean = true;
@@ -54,7 +54,7 @@ describe("ArrayField", () => {
   });
 
   it("should handle a compute fn", () => {
-    const arrayField = new ArrayFieldBuilder<string>("Foo")
+    const arrayField = new ArrayField.Builder<string>("Foo")
       .withCompute((values) => {
         return values.map((value) => value.trim().replace(/\D/g, ""));
       })
@@ -70,7 +70,7 @@ describe("ArrayField", () => {
   });
 
   it("should handle a validate fn", () => {
-    const arrayField = new ArrayFieldBuilder<string>("Foo")
+    const arrayField = new ArrayField.Builder<string>("Foo")
       .withValidate((value) => {
         if (G.isNotNil(value) && value.includes("1234567890")) {
           return new Message("error", "This is a restricted phone number.");

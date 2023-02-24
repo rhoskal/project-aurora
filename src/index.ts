@@ -1,27 +1,27 @@
 import axios from "axios";
 
-import { ArrayFieldBuilder } from "./field/arrayField";
-import { DateFieldBuilder } from "./field/dateField";
+import { ArrayField } from "./field/arrayField";
+import { DateField } from "./field/dateField";
 import { Message } from "./field/message";
-import { NumberFieldBuilder } from "./field/numberField";
-import { OptionFieldBuilder } from "./field/optionField";
-import { SheetBuilder } from "./sheet/sheet";
-import { TextFieldBuilder } from "./field/textField";
-import { WorkbookBuilder } from "./workbook/workbook";
-import { ReferenceFieldBuilder } from "./field/referenceField";
+import { NumberField } from "./field/numberField";
+import { OptionField } from "./field/optionField";
+import { Sheet } from "./sheet/sheet";
+import { TextField } from "./field/textField";
+import { Workbook } from "./workbook/workbook";
+import { ReferenceField } from "./field/referenceField";
 // import { FlatfileRecordBuilder as FlatfileRecord } from "./sheet/flatfileRecord";
-import { SpaceConfigBuilder } from "./space/spaceConfig";
+import { SpaceConfig } from "./space/spaceConfig";
 import * as G from "./helpers/typeGuards";
 
-const firstName = new TextFieldBuilder("First Name")
+const firstName = new TextField.Builder("First Name")
   .withDescription("Contact's legal first Name")
   .build();
 
-const lastName = new TextFieldBuilder("Last Name")
+const lastName = new TextField.Builder("Last Name")
   .withDescription("Contact's legal last Name")
   .build();
 
-const dob = new DateFieldBuilder("Date of Birth")
+const dob = new DateField.Builder("Date of Birth")
   // .withOffset(-7)
   // .withLocale("fr")
   .withDisplayFormat("dd/MM/yyyy")
@@ -32,7 +32,7 @@ const dob = new DateFieldBuilder("Date of Birth")
   })
   .build();
 
-const salary = new NumberFieldBuilder("Salary")
+const salary = new NumberField.Builder("Salary")
   .withValidate((value) => {
     if (G.isNotNil(value) && value < 0) {
       return new Message("error", "Salary cannot be negative");
@@ -48,7 +48,7 @@ const salary = new NumberFieldBuilder("Salary")
 //   });
 // const age = new ComputedFieldBuilder("Age");
 
-const emailSimple = new TextFieldBuilder("Email Simple")
+const emailSimple = new TextField.Builder("Email Simple")
   .withRequired()
   .withUnique()
   .withCompute((value) => {
@@ -65,7 +65,7 @@ const emailSimple = new TextFieldBuilder("Email Simple")
   })
   .build();
 
-const emailAsync = new TextFieldBuilder("Email Async")
+const emailAsync = new TextField.Builder("Email Async")
   .withRequired()
   .withUnique()
   .withValidateAsync(async (value, env) => {
@@ -90,14 +90,14 @@ const emailAsync = new TextFieldBuilder("Email Async")
   })
   .build();
 
-const phones = new ArrayFieldBuilder<string>("Phone Numbers")
+const phones = new ArrayField.Builder<string>("Phone Numbers")
   .withDescription("List of phone numbers")
   .withCompute((values) => {
     return values.map((value) => value.trim().replace(/\D/g, ""));
   })
   .build();
 
-const state = new OptionFieldBuilder("State")
+const state = new OptionField.Builder("State")
   .withDescription("You better pick Colorado!")
   // .withChoices({
   //   colorado: "Colorado",
@@ -117,7 +117,7 @@ const state = new OptionFieldBuilder("State")
 
 // should this exist on the workbook since we have access to the sheets their?
 // how to continue builder pattern here when so many params are required?
-const reference = new ReferenceFieldBuilder("Some reference field")
+const reference = new ReferenceField.Builder("Some reference field")
   .withDescription("asdf")
   .withCardinality("has-one")
   // .withForeignKey("key", sheet) // but we haven't created sheet yet :(
@@ -125,7 +125,7 @@ const reference = new ReferenceFieldBuilder("Some reference field")
   // .withRelation(field, references: key) // like Prisma
   .build();
 
-const contactsSheet = new SheetBuilder("Contacts")
+const contactsSheet = new Sheet.Builder("Contacts")
   .withField("first_name", firstName)
   .withField("last_name", lastName)
   .withField("emailSimple", emailSimple)
@@ -150,7 +150,7 @@ const contactsSheet = new SheetBuilder("Contacts")
   // .withComputedField("age", ["dob"], age);
   .build();
 
-const workbook = new WorkbookBuilder("Fundraiser Contacts")
+const workbook = new Workbook.Builder("Fundraiser Contacts")
   .withSheet(contactsSheet)
   .withEnv({ authKey: "some_key" })
   .build();
@@ -171,7 +171,7 @@ const workbook = new WorkbookBuilder("Fundraiser Contacts")
 // const x = record3.get("emails");
 // record3.addError("emails", "a");
 
-export default new SpaceConfigBuilder("Test")
+export default new SpaceConfig.Builder("Test")
   .withSlug("some-slug")
   .withWorkbook(workbook)
   .build();

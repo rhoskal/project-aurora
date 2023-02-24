@@ -1,4 +1,5 @@
-import { TextFieldBuilder } from "../../src/field/textField";
+// import { TextFieldBuilder } from "../../src/field/textField";
+import { TextField } from "../../src/field/textField";
 import { Message } from "../../src/field/message";
 import * as G from "../../src/helpers/typeGuards";
 
@@ -6,7 +7,7 @@ type Nullable<T> = null | T;
 
 describe("TextField", () => {
   it("should handle simple creation", () => {
-    const textField = new TextFieldBuilder("Foo").build();
+    const textField = new TextField.Builder("Foo").build();
 
     expect(textField.getLabel()).toBe("Foo");
     expect(textField.getDescription()).toBe("");
@@ -18,7 +19,7 @@ describe("TextField", () => {
   });
 
   it("should handle setting a description", () => {
-    const textField = new TextFieldBuilder("Foo")
+    const textField = new TextField.Builder("Foo")
       .withDescription("Some description")
       .build();
 
@@ -29,7 +30,7 @@ describe("TextField", () => {
   });
 
   it("should handle marking as required", () => {
-    const textField = new TextFieldBuilder("Foo").withRequired().build();
+    const textField = new TextField.Builder("Foo").withRequired().build();
 
     const actual: boolean = textField.getIsRequired();
     const expected: boolean = true;
@@ -38,7 +39,7 @@ describe("TextField", () => {
   });
 
   it("should handle marking as read-only", () => {
-    const textField = new TextFieldBuilder("Foo").withReadOnly().build();
+    const textField = new TextField.Builder("Foo").withReadOnly().build();
 
     const actual: boolean = textField.getIsReadOnly();
     const expected: boolean = true;
@@ -47,7 +48,7 @@ describe("TextField", () => {
   });
 
   it("should handle marking as unique", () => {
-    const textField = new TextFieldBuilder("Foo").withUnique().build();
+    const textField = new TextField.Builder("Foo").withUnique().build();
 
     const actual: boolean = textField.getIsUnique();
     const expected: boolean = true;
@@ -56,7 +57,7 @@ describe("TextField", () => {
   });
 
   it("should handle using a default value", () => {
-    const textField = new TextFieldBuilder("Foo").withDefault("bar").build();
+    const textField = new TextField.Builder("Foo").withDefault("bar").build();
 
     const actual: Nullable<string> = textField.getValue();
     const expected: string = "bar";
@@ -65,7 +66,7 @@ describe("TextField", () => {
   });
 
   it("should handle a compute fn", () => {
-    const textField = new TextFieldBuilder("Foo")
+    const textField = new TextField.Builder("Foo")
       .withCompute((value) => {
         if (G.isNotNil(value)) {
           return value.toLowerCase();
@@ -85,7 +86,7 @@ describe("TextField", () => {
   });
 
   it("should handle a validate fn", () => {
-    const textField = new TextFieldBuilder("Foo Bar")
+    const textField = new TextField.Builder("Foo Bar")
       .withValidate((value) => {
         if (G.isNotNil(value) && value.includes("bar")) {
           return new Message("warn", "bar with foo is dangerous");
