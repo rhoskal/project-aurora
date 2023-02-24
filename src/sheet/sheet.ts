@@ -44,9 +44,9 @@ type EventTopic =
   | "workbook:removed";
 
 export class Sheet<T = never> {
-  private readonly displayName: string;
-  private readonly fields: Map<string, Field<T extends infer F ? F : never>>;
-  private readonly computeFn: O.Option<
+  readonly #displayName: string;
+  readonly #fields: Map<string, Field<T extends infer F ? F : never>>;
+  readonly #computeFn: O.Option<
     (opts: {
       records: ReadonlyArray<FlatfileRecord>;
       env: Env;
@@ -54,8 +54,8 @@ export class Sheet<T = never> {
     }) => void
   >;
 
-  private _records: ReadonlyArray<FlatfileRecord>;
-  private readonly _logger: Logger;
+  #records: ReadonlyArray<FlatfileRecord>;
+  readonly #logger: Logger;
 
   constructor(params: {
     displayName: string;
@@ -67,31 +67,31 @@ export class Sheet<T = never> {
     }) => void;
   }) {
     // params
-    this.displayName = params.displayName;
-    this.fields = params.fields;
-    this.computeFn = O.fromNullable(params.computeFn);
+    this.#displayName = params.displayName;
+    this.#fields = params.fields;
+    this.#computeFn = O.fromNullable(params.computeFn);
 
     // internal
-    this._records = [];
-    this._logger = new Logger();
+    this.#records = [];
+    this.#logger = new Logger();
   }
 
   /* DisplayName */
 
   public getDisplayName(): string {
-    return this.displayName;
+    return this.#displayName;
   }
 
   /* Compute Fn */
 
   private _runComputeFn(): void {
     pipe(
-      this.computeFn,
+      this.#computeFn,
       O.match(constVoid, (computeFn) => {
         const newRecords = computeFn({
-          records: this._records,
+          records: this.#records,
           env: {},
-          logger: this._logger,
+          logger: this.#logger,
         });
       }),
     );
