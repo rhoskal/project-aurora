@@ -1,5 +1,7 @@
 # Project Aurora
 
+PureScript version [here](https://github.com/hansjhoffman/silver-sky).
+
 ## TODO's
 
 - [ ] Dependency injection for environment from Workbook all the way down to fields
